@@ -954,24 +954,14 @@ function updateMonthDropdown() {
         }
 
         function renderLeaderboards() {
-    const select = document.getElementById('leaderboard-month-select');
-    if(!select || !select.value) return;
-    const monthPrefix = select.value;
-    
-    let daysElapsed;
-    const today = new Date();
-    const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-    
-    if (monthPrefix === currentMonthStr) {
-        daysElapsed = today.getDate();
-    } else {
-        const [yyyy, mm] = monthPrefix.split('-');
-        daysElapsed = new Date(yyyy, mm, 0).getDate();
-    }
-
-    const container = document.getElementById('leaderboard-categories');
+            if(!historyDateStr) return;
+            const dateObj = new Date(historyDateStr);
+            const monthPrefix = historyDateStr.slice(0, 7);
+            document.getElementById('leaderboard-month-label').textContent = `BULAN: ${dateObj.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`;
+            
+            const daysElapsed = getDaysElapsedInMonth(historyDateStr);
+            const container = document.getElementById('leaderboard-categories');
             container.innerHTML = '';
-        
 
             // The 4 requested categories
             const categories = [
