@@ -77,7 +77,7 @@
 
     <header class="w-full max-w-2xl mx-auto pt-10 pb-6 px-4 text-center">
         <div class="flex justify-center mb-4 relative">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Muhammadiyah_logo.svg/1024px-Muhammadiyah_logo.svg.png" 
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Muhammadiyah_logo.svg/256px-Muhammadiyah_logo.svg.png" 
                  alt="Logo" id="logo-img"
                  class="w-20 h-20 object-contain cursor-pointer drop-shadow-md hover:scale-105 transition-transform relative z-10"
                  title="Logo SD Muhammadiyah Tanjung">
@@ -141,7 +141,10 @@
                 <h3 class="text-2xl md:text-3xl font-black text-center mb-2 text-indigo-800 drop-shadow-sm flex items-center justify-center gap-2">
                     <i class="ph-fill ph-trophy text-yellow-500"></i> Peringkat Terbaik <i class="ph-fill ph-trophy text-yellow-500"></i>
                 </h3>
-                <p id="leaderboard-month-label" class="text-center text-indigo-600 font-bold mb-10 text-sm md:text-base uppercase tracking-wider">BULAN: ...</p>
+                <div class="flex justify-center mb-10 relative z-10">
+    <select id="leaderboard-month-select" class="bg-indigo-50 border-2 border-indigo-200 text-indigo-700 font-bold py-2 px-4 rounded-xl outline-none cursor-pointer text-sm md:text-base uppercase tracking-wider">
+    </select>
+</div>
                 
                 <div id="leaderboard-categories" class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
                     <!-- Categories filled by JS -->
@@ -451,7 +454,7 @@
         
         // Default Web Settings
         let webSettings = {
-            logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Muhammadiyah_logo.svg/1024px-Muhammadiyah_logo.svg.png",
+            logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Muhammadiyah_logo.svg/256px-Muhammadiyah_logo.svg.png",
             mainTitle: "JURNAL IBADAH SISWA",
             subTitle: "SD Muhammadiyah Tanjung",
             bgColor: "#EAF4FC",
@@ -501,6 +504,24 @@
 
             renderPrayerForm();
             initHistoryListeners();
+
+            document.getElementById('student-select').addEventListener('change', (e) => {
+    const sId = e.target.value;
+    // Reset seluruh centang
+    document.querySelectorAll('.prayer-checkbox').forEach(c => c.checked = false);
+    if(!sId) return;
+
+    // Cek apakah hari ini sudah ada jurnal yang disimpan
+    const existing = allJournals.find(j => j.studentId === sId && j.date === todayDateString);
+    if(existing) {
+        existing.prayers.forEach(pid => {
+            const cb = document.getElementById(`check-${pid}`);
+            if(cb) cb.checked = true; // Otomatis tercentang
+        });
+    }
+});
+
+document.getElementById('leaderboard-month-select').addEventListener('change', renderLeaderboards); // Ini trigger untuk dropdown bulan
         }
 
         function showToast(msg, type = 'info') {
@@ -654,12 +675,15 @@
                 const card = document.createElement('div');
                 card.className = "bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3 hover:border-blue-200 cursor-pointer select-none";
                 card.innerHTML = `
-                    <input type="checkbox" id="check-${prayer.id}" value="${prayer.id}" class="prayer-checkbox">
-                    <label for="check-${prayer.id}" class="flex items-center gap-2 cursor-pointer w-full font-bold text-gray-700 text-sm">
-                        <i class="ph-bold ${prayer.icon} text-2xl ${prayer.color}"></i> ${prayer.label}
-                    </label>
-                `;
-                card.addEventListener('click', (e) => { if (e.target.tagName !== 'INPUT') { const cb = card.querySelector('input'); cb.checked = !cb.checked; } });
+    <input type="checkbox" id="check-${prayer.id}" value="${prayer.id}" class="prayer-checkbox pointer-events-none">
+    <div class="flex items-center gap-2 w-full font-bold text-gray-700 text-sm pointer-events-none">
+        <i class="ph-bold ${prayer.icon} text-2xl ${prayer.color}"></i> ${prayer.label}
+    </div>
+`;
+card.addEventListener('click', () => { 
+    const cb = card.querySelector('input'); 
+    cb.checked = !cb.checked; 
+});
                 el.appendChild(card);
 
                 if(adminEl) {
@@ -749,11 +773,34 @@
         }
 
         function loadJournalsForAdmin() {
-            onSnapshot(query(getCol('journals')), (snap) => {
-                allJournals = []; snap.forEach(d => allJournals.push({id:d.id, ...d.data()}));
-                renderAdminJournals(); renderPublicHistory();
-            });
-        }
+    onSnapshot(query(getCol('journals')), (snap) => {
+        allJournals = []; snap.forEach(d => allJournals.push({id:d.id, ...d.data()}));
+        updateMonthDropdown(); // Menambahkan trigger update dropdown
+        renderAdminJournals(); renderPublicHistory();
+    });
+}
+
+function updateMonthDropdown() {
+    const select = document.getElementById('leaderboard-month-select');
+    if(!select) return;
+    const currentVal = select.value;
+    const months = new Set();
+    
+    if(todayDateString) months.add(todayDateString.slice(0, 7));
+    allJournals.forEach(j => months.add(j.date.slice(0, 7)));
+
+    const sortedMonths = Array.from(months).sort().reverse();
+    select.innerHTML = '';
+    sortedMonths.forEach(m => {
+        const dateObj = new Date(m + "-01");
+        const label = dateObj.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        select.innerHTML += `<option value="${m}">${label}</option>`;
+    });
+    
+    if (currentVal && sortedMonths.includes(currentVal)) {
+        select.value = currentVal;
+    }
+}
 
         function setupHistoryHeaders() {
             const thead = document.getElementById('history-thead');
@@ -868,14 +915,22 @@
         }
 
         function renderLeaderboards() {
-            if(!historyDateStr) return;
-            const dateObj = new Date(historyDateStr);
-            const monthPrefix = historyDateStr.slice(0, 7);
-            document.getElementById('leaderboard-month-label').textContent = `BULAN: ${dateObj.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`;
-            
-            const daysElapsed = getDaysElapsedInMonth(historyDateStr);
-            const container = document.getElementById('leaderboard-categories');
-            container.innerHTML = '';
+    const select = document.getElementById('leaderboard-month-select');
+    if(!select || !select.value) return;
+    const monthPrefix = select.value;
+    
+    let daysElapsed;
+    const today = new Date();
+    const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    
+    if (monthPrefix === currentMonthStr) {
+        daysElapsed = today.getDate();
+    } else {
+        const [yyyy, mm] = monthPrefix.split('-');
+        daysElapsed = new Date(yyyy, mm, 0).getDate();
+    }
+
+    const container = document.getElementById('leaderboard-categories');
 
             // The 4 requested categories
             const categories = [
@@ -1163,16 +1218,22 @@
                     
                     const donePrayers = [];
                     for(let p=1; p<rowParts.length; p+=2) {
-                        const pNameRaw = rowParts[p].toLowerCase();
-                        // Hapus karakter aneh (misal: muraja'ah -> murajaah)
-                        const pName = pNameRaw.replace(/[^a-z0-9]/g, '');
-                        const status = rowParts[p+1]?.toLowerCase();
-                        
-                        if(status === 'true') {
-                            const matched = BASE_PRAYERS.find(b => b.id.toLowerCase() === pName || b.label.toLowerCase().replace(/[^a-z0-9]/g, '') === pName);
-                            if(matched) donePrayers.push(matched.id);
-                        }
-                    }
+    const pNameRaw = rowParts[p].toLowerCase();
+    let pName = pNameRaw.replace(/[^a-z0-9]/g, '');
+    
+    // Normalisasi khusus MURAJA'AH
+    if (pName === 'murajaah' || pName === 'murojaah' || pNameRaw === "muraja'ah" || pNameRaw === "muroja'ah") {
+        pName = 'murajaah';
+    }
+
+    const status = rowParts[p+1]?.toLowerCase();
+    
+    if(status === 'true') {
+        const matched = BASE_PRAYERS.find(b => b.id.toLowerCase() === pName || b.label.toLowerCase().replace(/[^a-z0-9]/g, '') === pName);
+        if(matched) donePrayers.push(matched.id);
+    }
+}
+
                     
                     if(donePrayers.length > 0) {
                         try {
