@@ -791,32 +791,8 @@ card.addEventListener('click', () => {
         function loadJournalsForAdmin() {
             onSnapshot(query(getCol('journals')), (snap) => {
                 allJournals = []; snap.forEach(d => allJournals.push({id:d.id, ...d.data()}));
-                updateMonthDropdown();
                 renderAdminJournals(); renderPublicHistory();
             });
-        }
-
-        function updateMonthDropdown() {
-            const select = document.getElementById('leaderboard-month-select');
-            if(!select) return;
-            const currentVal = select.value;
-            const months = new Set();
-            
-            if(todayDateString) months.add(todayDateString.slice(0, 7));
-            allJournals.forEach(j => months.add(j.date.slice(0, 7)));
-
-            const sortedMonths = Array.from(months).sort().reverse();
-            select.innerHTML = '';
-            sortedMonths.forEach(m => {
-                const dateObj = new Date(m + "-01");
-                const label = dateObj.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-                select.innerHTML += `<option value="${m}">${label}</option>`;
-            });
-            
-            if (currentVal && sortedMonths.includes(currentVal)) select.value = currentVal;
-            
-            // Pasang event listener agar saat dipilih langsung mengubah peringkat
-            select.addEventListener('change', renderLeaderboards);
         }
 
 function updateMonthDropdown() {
