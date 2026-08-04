@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jurnal Ibadah Siswa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Comic+Neue:wght@700&family=Lora:wght@500;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #EAF4FC; 
+            color: #1a202c;
+            -ms-overflow-style: none;  
+            scrollbar-width: none;  
+        }
+        body::-webkit-scrollbar {
+            display: none;
+        }
+
+        .prayer-checkbox {
+            appearance: none;
+            background-color: #fff;
+            margin: 0;
+            font: inherit;
+            color: currentColor;
+            width: 1.5em;
+            height: 1.5em;
+            border: 2px solid #CBD5E1;
+            border-radius: 0.25em;
+            display: grid;
+            place-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            flex-shrink: 0;
+        }
+
+        .prayer-checkbox::before {
+            content: "";
+            width: 0.85em;
+            height: 0.85em;
+            transform: scale(0);
+            transition: 120ms transform ease-in-out;
+            box-shadow: inset 1em 1em #2563EB;
+            transform-origin: center;
+            clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+        }
+
+        .prayer-checkbox:checked { border-color: #2563EB; }
+        .prayer-checkbox:checked::before { transform: scale(1); }
+
+        .modal-backdrop {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .animate-blob { animation: blob 7s infinite; }
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-4000 { animation-delay: 4s; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center">
+
+    <header class="w-full max-w-2xl mx-auto pt-10 pb-6 px-4 text-center">
+        <div class="flex justify-center mb-4 relative">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Muhammadiyah_logo.svg/1024px-Muhammadiyah_logo.svg.png" 
+                 alt="Logo" id="logo-img"
+                 class="w-20 h-20 object-contain cursor-pointer drop-shadow-md hover:scale-105 transition-transform relative z-10"
+                 title="Logo SD Muhammadiyah Tanjung">
+        </div>
+        <h1 id="main-title" class="text-2xl font-bold text-[#1e3a8a] mb-1">JURNAL IBADAH SISWA</h1>
+        <h2 id="sub-title" class="text-[#2563EB] font-medium text-lg mb-2">SD Muhammadiyah Tanjung</h2>
+        <p id="current-date" class="text-gray-500 font-medium"></p>
+    </header>
+
+    <main class="w-full max-w-2xl mx-auto px-4 flex flex-col items-center">
+        <div class="w-full max-w-lg">
+            <div class="mb-6 w-full relative z-20">
+                <label class="block text-gray-700 font-medium mb-2 ml-1 text-sm">Nama Siswa</label>
+                <div class="relative">
+                    <select id="student-select" class="w-full appearance-none bg-white border border-gray-200 text-gray-700 py-3 px-4 rounded-xl leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm font-medium cursor-pointer">
+                        <option value="">-- Pilih Siswa --</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-700">
+                        <i class="ph-bold ph-caret-down"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div id="prayer-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8 w-full">
+                <!-- Checkboxes injected by JS -->
+            </div>
+
+            <button id="btn-simpan-jurnal" class="w-full bg-[#243B8B] hover:bg-[#1a2b66] text-white font-bold py-4 px-4 rounded-xl shadow-lg transition-all active:scale-[0.98] tracking-wide mb-10 relative z-10">
+                SIMPAN JURNAL
+            </button>
+        </div>
+    </main>
+
+    <div class="w-full max-w-[1200px] mx-auto mt-2 mb-16 p-4">
+        <div class="bg-white/90 backdrop-blur-lg rounded-[2rem] p-4 md:p-8 shadow-xl border border-blue-50 relative overflow-hidden">
+            <div class="absolute top-[-50px] left-[-50px] w-32 h-32 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob"></div>
+            <div class="absolute top-[-50px] right-[-50px] w-32 h-32 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob animation-delay-2000"></div>
+
+            <div class="text-center mb-6 relative z-10">
+                <h2 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#243B8B] to-purple-600 inline-block">
+                    ✨ Riwayat Ibadah Harian ✨
+                </h2>
+            </div>
+
+            <div class="flex justify-center items-center gap-4 mb-6 relative z-10">
+                <button id="btn-prev-history" class="w-10 h-10 flex items-center justify-center bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 shadow-sm"><i class="ph-bold ph-caret-left text-xl"></i></button>
+                <input type="date" id="history-date-picker" class="bg-blue-50 border-2 border-blue-200 rounded-xl px-4 py-2 font-black text-blue-900 outline-none cursor-pointer shadow-inner text-sm md:text-base text-center">
+                <button id="btn-next-history" class="w-10 h-10 flex items-center justify-center bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 shadow-sm"><i class="ph-bold ph-caret-right text-xl"></i></button>
+            </div>
+
+            <!-- Dynamic Table Container -->
+            <div class="overflow-x-auto rounded-xl border-2 border-blue-100 shadow-inner bg-white custom-scrollbar mb-12 relative z-10" id="history-table-container">
+                <table class="w-full text-center border-collapse whitespace-nowrap">
+                    <thead id="history-thead" class="bg-blue-50 border-b-2 border-blue-100"></thead>
+                    <tbody id="history-tbody" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+
+            <!-- 4 Categories Leaderboard -->
+            <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-[2rem] p-4 md:p-8 border-2 border-indigo-100 shadow-sm relative z-10">
+                <h3 class="text-2xl md:text-3xl font-black text-center mb-2 text-indigo-800 drop-shadow-sm flex items-center justify-center gap-2">
+                    <i class="ph-fill ph-trophy text-yellow-500"></i> Peringkat Terbaik <i class="ph-fill ph-trophy text-yellow-500"></i>
+                </h3>
+                <p id="leaderboard-month-label" class="text-center text-indigo-600 font-bold mb-10 text-sm md:text-base uppercase tracking-wider">BULAN: ...</p>
+                
+                <div id="leaderboard-categories" class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+                    <!-- Categories filled by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PIN Modals -->
+    <div id="modal-pin" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop p-4">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-gray-100">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">Masukkan PIN</h3>
+                <button id="close-pin-modal" class="text-gray-400 hover:text-gray-600 bg-gray-100 p-2 rounded-full"><i class="ph-bold ph-x"></i></button>
+            </div>
+            <p class="text-sm text-gray-500 mb-6 text-center">Verifikasi identitas untuk <br><span id="pin-student-name" class="font-bold text-lg text-blue-700"></span></p>
+            <div class="flex justify-center gap-2 mb-6" id="pin-inputs">
+                <!-- 6 Inputs generated via JS for cleaner HTML -->
+                <input type="password" maxlength="1" class="w-10 h-12 text-center text-xl font-bold border-2 rounded-xl focus:border-[#243B8B] outline-none">
+                <input type="password" maxlength="1" class="w-10 h-12 text-center text-xl font-bold border-2 rounded-xl focus:border-[#243B8B] outline-none">
+                <input type="password" maxlength="1" class="w-10 h-12 text-center text-xl font-bold border-2 rounded-xl focus:border-[#243B8B] outline-none">
+                <input type="password" maxlength="1" class="w-10 h-12 text-center text-xl font-bold border-2 rounded-xl focus:border-[#243B8B] outline-none">
+                <input type="password" maxlength="1" class="w-10 h-12 text-center text-xl font-bold border-2 rounded-xl focus:border-[#243B8B] outline-none">
+                <input type="password" maxlength="1" class="w-10 h-12 text-center text-xl font-bold border-2 rounded-xl focus:border-[#243B8B] outline-none">
+            </div>
+            <p id="pin-error-msg" class="text-red-500 text-sm text-center font-medium mb-4 hidden"><i class="ph-fill ph-warning-circle"></i> PIN salah.</p>
+            <button id="btn-submit-pin" class="w-full bg-[#243B8B] hover:bg-[#1a2b66] text-white font-bold py-3 rounded-xl shadow">Konfirmasi</button>
+        </div>
+    </div>
+
+    <div id="modal-create-pin" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop p-4">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-gray-100">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-xl font-bold text-gray-800">Buat PIN Keamanan</h3>
+                <button id="close-create-pin-modal" class="text-gray-400 bg-gray-100 p-2 rounded-full"><i class="ph-bold ph-x"></i></button>
+            </div>
+            <p class="text-sm text-gray-500 mb-6 text-center">Halo <span id="create-pin-student-name" class="font-bold text-blue-700"></span>,<br>buat 6 digit rahasia.</p>
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase text-center mb-2">Masukkan 6 Digit</label>
+                    <div class="flex justify-center gap-1" id="create-pin-inputs-1"></div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase text-center mb-2 mt-4">Ketik Ulang PIN</label>
+                    <div class="flex justify-center gap-1" id="create-pin-inputs-2"></div>
+                </div>
+            </div>
+            <p id="create-pin-error-msg" class="text-red-500 text-sm text-center font-medium mb-4 hidden"></p>
+            <button id="btn-submit-new-pin" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow">Simpan PIN</button>
+        </div>
+    </div>
+
+    <!-- Modal Lihat Semua Peringkat -->
+    <div id="modal-all-ranks" class="fixed inset-0 z-[60] hidden items-center justify-center modal-backdrop p-4">
+        <div class="bg-white rounded-[2rem] p-6 w-full max-w-lg shadow-2xl border border-gray-100 max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4 border-b pb-4">
+                <h3 class="text-xl font-black text-gray-800 flex items-center gap-2" id="all-ranks-title"><i class="ph-fill ph-trophy text-yellow-500"></i> Semua Peringkat</h3>
+                <button onclick="document.getElementById('modal-all-ranks').classList.replace('flex', 'hidden')" class="text-gray-400 bg-gray-100 p-2 rounded-full hover:bg-gray-200"><i class="ph-bold ph-x"></i></button>
+            </div>
+            <div class="overflow-y-auto custom-scrollbar flex-1 pr-2 space-y-2" id="all-ranks-list">
+                <!-- Diisi via JS -->
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] hidden transition-all duration-300 opacity-0 translate-y-[-20px]">
+        <div class="bg-white px-6 py-3 rounded-full shadow-xl border-l-4 flex items-center gap-3">
+            <i id="toast-icon" class="text-xl"></i>
+            <span id="toast-message" class="text-gray-800 font-bold text-sm"></span>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="admin-panel" class="fixed inset-0 z-40 hidden bg-gray-50 overflow-y-auto">
+        <div class="max-w-6xl mx-auto p-4 md:p-6 mt-4">
+            <div class="flex justify-between items-center mb-6 border-b border-gray-200 pb-4 bg-white p-4 rounded-2xl shadow-sm">
+                <h2 class="text-xl md:text-2xl font-black text-gray-800 flex items-center gap-2">
+                    <i class="ph-fill ph-shield-check text-blue-600"></i> Mode Guru/Admin
+                </h2>
+                <button id="btn-close-admin" class="px-4 py-2 bg-gray-100 rounded-xl font-bold text-gray-700 flex items-center gap-2 hover:bg-gray-200">
+                    <i class="ph-bold ph-x"></i> Tutup
+                </button>
+            </div>
+
+            <!-- Tab Navigation for Admin -->
+            <div class="flex gap-2 mb-6 overflow-x-auto pb-2 custom-scrollbar border-b border-gray-300">
+                <button onclick="switchAdminTab('tab-data')" class="admin-tab-btn active px-4 py-2 bg-blue-600 text-white font-bold rounded-t-xl" id="btn-tab-data">Data & Siswa</button>
+                <button onclick="switchAdminTab('tab-entry')" class="admin-tab-btn px-4 py-2 bg-gray-200 text-gray-600 font-bold rounded-t-xl hover:bg-gray-300" id="btn-tab-entry">Entri Ibadah</button>
+                <button onclick="switchAdminTab('tab-settings')" class="admin-tab-btn px-4 py-2 bg-gray-200 text-gray-600 font-bold rounded-t-xl hover:bg-gray-300" id="btn-tab-settings">Pengaturan Tampilan</button>
+                <button onclick="switchAdminTab('tab-rank')" class="admin-tab-btn px-4 py-2 bg-gray-200 text-gray-600 font-bold rounded-t-xl hover:bg-gray-300" id="btn-tab-rank">Laporan Peringkat</button>
+            </div>
+
+            <!-- TAB 1: Data & Siswa -->
+            <div id="tab-data" class="admin-tab-content grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[500px]">
+                    <h3 class="text-lg font-bold mb-4 border-b border-gray-100 pb-2 flex justify-between items-center text-blue-800">
+                        Daftar Siswa <span id="student-count" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs">0</span>
+                    </h3>
+                    <div class="flex gap-2 mb-4">
+                        <input type="text" id="admin-new-student-name" placeholder="Nama Siswa Baru" class="flex-1 border-2 border-gray-200 rounded-xl p-2 outline-none focus:border-blue-500 font-medium text-sm">
+                        <button id="btn-add-student" class="bg-blue-600 text-white px-4 rounded-xl font-bold hover:bg-blue-700 text-sm">Tambah</button>
+                    </div>
+                    <button id="btn-import-students" class="w-full bg-emerald-500 text-white font-bold py-2 rounded-xl mb-4 text-sm flex justify-center items-center gap-2 hover:bg-emerald-600"><i class="ph-bold ph-users-three"></i> Import 34 Data Siswa</button>
+                    
+                    <div class="overflow-y-auto flex-1 pr-2 space-y-2 custom-scrollbar" id="admin-student-list"></div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[500px]">
+                    <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+                        <h3 class="text-lg font-bold text-blue-800">Riwayat Jurnal</h3>
+                        <input type="date" id="admin-filter-date" class="border-2 rounded-lg px-2 py-1 text-sm outline-none">
+                    </div>
+                    <div class="overflow-y-auto flex-1 custom-scrollbar">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <tbody id="admin-journal-list" class="divide-y divide-gray-100 bg-white"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB ENTRI (BARU) -->
+            <div id="tab-entry" class="admin-tab-content hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Manual Entry -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="text-lg font-bold text-blue-800 mb-4 border-b border-gray-100 pb-2 flex items-center gap-2">
+                        <i class="ph-fill ph-hand-pointing"></i> Entri Jurnal Manual
+                    </h3>
+                    <div class="grid grid-cols-1 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-bold mb-1 text-gray-500 uppercase">1. Pilih Tanggal</label>
+                            <input type="date" id="admin-manual-date" class="w-full border-2 border-blue-100 focus:border-blue-500 rounded-xl p-3 font-medium outline-none text-sm transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold mb-1 text-gray-500 uppercase">2. Pilih Siswa</label>
+                            <select id="admin-manual-student" class="w-full border-2 border-blue-100 focus:border-blue-500 rounded-xl p-3 font-medium outline-none text-sm transition-all"></select>
+                        </div>
+                    </div>
+                    <label class="block text-xs font-bold mb-2 text-gray-500 uppercase">3. Centang Ibadah</label>
+                    <div id="admin-manual-prayers" class="grid grid-cols-2 gap-2 mb-6"></div>
+                    <button id="btn-admin-manual-save" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl w-full shadow-md active:scale-95 transition-transform">Simpan Entri Siswa</button>
+                </div>
+                
+                <!-- Bulk Entry -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="text-lg font-bold text-orange-600 mb-2 border-b border-gray-100 pb-2 flex items-center gap-2">
+                        <i class="ph-fill ph-stack"></i> Bulk Entri (Masal)
+                    </h3>
+                    <div class="bg-orange-50 text-orange-800 p-3 rounded-lg text-xs font-mono mb-4 border border-orange-100">
+                        <b>Format Wajib:</b><br>
+                        DD-MM-YYYY<br>
+                        Nama Ibadah true Ibadah2 true<br><br>
+                        <b>Contoh:</b><br>
+                        03-08-2026<br>
+                        zain shubuh true dzuhur true ashar true maghrib true muraja'ah true tilawah true
+                    </div>
+                    <textarea id="admin-bulk-text" class="w-full h-40 border-2 border-orange-200 rounded-xl p-3 text-sm font-mono outline-none focus:border-orange-500 transition-all custom-scrollbar bg-gray-50" placeholder="Paste data text disini..."></textarea>
+                    <button id="btn-admin-bulk-save" class="mt-4 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-xl w-full shadow-md active:scale-95 transition-transform">Proses Bulk Data</button>
+                </div>
+            </div>
+
+            <!-- TAB 2: Pengaturan Tampilan -->
+            <div id="tab-settings" class="admin-tab-content hidden space-y-6">
+                <!-- Identitas -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="text-lg font-bold text-purple-700 mb-4 border-b border-gray-100 pb-2"><i class="ph-fill ph-paint-brush"></i> Identitas Web</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div><label class="block text-xs font-bold mb-1">URL Logo</label><input type="text" id="set-logo" class="w-full border-2 rounded-lg p-2 text-sm"></div>
+                        <div><label class="block text-xs font-bold mb-1">Background (Hex)</label><input type="text" id="set-bg" class="w-full border-2 rounded-lg p-2 text-sm"></div>
+                        <div><label class="block text-xs font-bold mb-1">Judul Utama</label><input type="text" id="set-title" class="w-full border-2 rounded-lg p-2 text-sm"></div>
+                        <div><label class="block text-xs font-bold mb-1">Sub Judul</label><input type="text" id="set-subtitle" class="w-full border-2 rounded-lg p-2 text-sm"></div>
+                    </div>
+                </div>
+
+                <!-- Tabel Riwayat -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="text-lg font-bold text-indigo-700 mb-4 border-b border-gray-100 pb-2"><i class="ph-fill ph-table"></i> Pengaturan Tabel Riwayat</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-bold mb-1">Ukuran Huruf (px)</label>
+                            <input type="number" id="set-table-size" class="w-full border-2 rounded-lg p-2 text-sm" placeholder="Contoh: 13">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold mb-1">Lebar Kolom (px)</label>
+                            <input type="number" id="set-table-col" class="w-full border-2 rounded-lg p-2 text-sm" placeholder="Contoh: 70">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold mb-1">Tinggi Baris (px)</label>
+                            <input type="number" id="set-table-row" class="w-full border-2 rounded-lg p-2 text-sm" placeholder="Contoh: 40">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold mb-1">Jenis Font</label>
+                            <select id="set-table-font" class="w-full border-2 rounded-lg p-2 text-sm">
+                                <option value="Inter">Inter (Bawaan)</option>
+                                <option value="Comic Neue">Comic (Lucu)</option>
+                                <option value="Lora">Lora (Resmi)</option>
+                                <option value="monospace">Monospace</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <h4 class="font-bold text-sm mt-6 mb-2 text-gray-700">Manajemen Ibadah (Ubah Nama / Ikon / Sembunyikan)</h4>
+                    <p class="text-[10px] text-gray-500 mb-2">Untuk ikon, gunakan class dari <a href="https://phosphoricons.com/" target="_blank" class="text-blue-500 underline">Phosphor Icons</a> (contoh: ph-sun, ph-moon, ph-book-open).</p>
+                    <div id="admin-column-settings" class="grid grid-cols-1 gap-3 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <button id="btn-save-settings" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-xl shadow-md w-full md:w-auto">Simpan Semua Pengaturan</button>
+            </div>
+
+            <!-- TAB 3: Laporan Peringkat -->
+            <div id="tab-rank" class="admin-tab-content hidden bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold text-emerald-700 mb-4 border-b border-gray-100 pb-2 flex items-center gap-2">
+                    <i class="ph-fill ph-chart-bar"></i> Laporan Rentang Tanggal
+                </h3>
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold mb-1">Dari Tanggal</label>
+                        <input type="date" id="report-start" class="w-full border-2 rounded-lg p-2 font-medium outline-none text-sm">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold mb-1">Sampai Tanggal</label>
+                        <input type="date" id="report-end" class="w-full border-2 rounded-lg p-2 font-medium outline-none text-sm">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold mb-1">Kategori Ibadah</label>
+                        <select id="report-category" class="w-full border-2 rounded-lg p-2 font-medium outline-none text-sm">
+                            <option value="all">Semua Akumulasi</option>
+                            <option value="sholat5">Sholat 5 Waktu</option>
+                            <option value="dhuha">Sholat Dhuha</option>
+                            <option value="murajaah">Muraja'ah</option>
+                            <option value="tilawah">Tilawah</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button id="btn-generate-report" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg w-full">Tampilkan</button>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto rounded-xl border border-gray-200 shadow-inner custom-scrollbar">
+                    <table class="w-full text-left text-sm whitespace-nowrap">
+                        <thead class="bg-gray-100 border-b-2 border-gray-200">
+                            <tr>
+                                <th class="p-3 font-bold text-gray-700 w-16 text-center">Rank</th>
+                                <th class="p-3 font-bold text-gray-700">Nama Siswa</th>
+                                <th class="p-3 font-bold text-gray-700 text-center">Total Dilakukan</th>
+                                <th class="p-3 font-bold text-gray-700 text-center">Persentase (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="report-tbody" class="divide-y divide-gray-100">
+                            <tr><td colspan="4" class="p-4 text-center text-gray-500">Pilih rentang tanggal dan klik tampilkan.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, deleteDoc, updateDoc, query, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Mock Firebase Config (Adjust this for production based on standard procedure)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'jurnal-ibadah-sd-app';
+        let firebaseConfig;
+        try {
+            firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "AIzaSyB8giE55or3t8bJtfHbpbuCV_1AmvmdRfM",
+
+  authDomain: "sdmuhita.firebaseapp.com",
+
+  projectId: "sdmuhita",
+
+  storageBucket: "sdmuhita.firebasestorage.app",
+
+  messagingSenderId: "193599163480",
+
+  appId: "1:193599163480:web:44deda75b29ff8fe9e4e2d"
+
+};
+
+        } catch (e) { console.error("Firebase config parsing error", e); }
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        let currentUser = null;
+
+        // Base Prayers Configuration with categorization
+        const BASE_PRAYERS = [
+            { id: 'shubuh', label: 'Shubuh', icon: 'ph-sun-horizon', color: 'text-amber-500', group: 'sholat5' },
+            { id: 'dzuhur', label: 'Dzuhur', icon: 'ph-sun', color: 'text-orange-500', group: 'sholat5' },
+            { id: 'ashar', label: 'Ashar', icon: 'ph-cloud-sun', color: 'text-gray-500', group: 'sholat5' },
+            { id: 'maghrib', label: 'Maghrib', icon: 'ph-sun-dim', color: 'text-red-500', group: 'sholat5' },
+            { id: 'isya', label: 'Isya', icon: 'ph-moon', color: 'text-indigo-600', group: 'sholat5' },
+            { id: 'dhuha', label: 'Dhuha', icon: 'ph-sun', color: 'text-yellow-500', group: 'dhuha' },
+            { id: 'murajaah', label: 'Muraja\'ah', icon: 'ph-book-open-text', color: 'text-emerald-600', group: 'murajaah' },
+            { id: 'tilawah', label: 'Tilawah', icon: 'ph-book-open', color: 'text-purple-600', group: 'tilawah' }
+        ];
+
+        let studentsData = [];
+        let allJournals = [];
+        let todayDateString = "";
+        let historyDateStr = "";
+        let expectedPin = "";
+        let pendingJournalData = {};
+        
+        // Default Web Settings
+        let webSettings = {
+            logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Muhammadiyah_logo.svg/1024px-Muhammadiyah_logo.svg.png",
+            mainTitle: "JURNAL IBADAH SISWA",
+            subTitle: "SD Muhammadiyah Tanjung",
+            bgColor: "#EAF4FC",
+            tableFontSize: 13,
+            tableColWidth: 70,
+            tableRowHeight: 40,
+            tableFontFamily: "Inter",
+            prayersConfig: {} 
+        };
+
+        function getActivePrayers() {
+            return BASE_PRAYERS.map(p => {
+                const override = webSettings.prayersConfig[p.id] || {};
+                return { 
+                    ...p, 
+                    label: override.label !== undefined ? override.label : p.label,
+                    icon: override.icon !== undefined && override.icon.trim() !== '' ? override.icon : p.icon,
+                    visible: override.visible !== undefined ? override.visible : true
+                };
+            }).filter(p => p.visible);
+        }
+
+        function initUI() {
+            const today = new Date();
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').textContent = today.toLocaleDateString('id-ID', dateOptions);
+            
+            // Generate formats suitable for inputs yyyy-mm-dd
+            todayDateString = today.toLocaleDateString('en-CA'); 
+            historyDateStr = todayDateString;
+            document.getElementById('admin-filter-date').value = todayDateString;
+            document.getElementById('history-date-picker').value = historyDateStr;
+            const adminManDate = document.getElementById('admin-manual-date');
+            if(adminManDate) adminManDate.value = todayDateString;
+
+            const createInputs = (containerId) => {
+                const c = document.getElementById(containerId); c.innerHTML = '';
+                for(let i=0; i<6; i++) c.innerHTML += `<input type="password" maxlength="1" class="w-10 h-12 text-center text-xl font-bold border-2 rounded-xl focus:border-green-500 outline-none transition-colors">`;
+                return Array.from(c.querySelectorAll('input'));
+            };
+            window.createPinInputs1 = createInputs('create-pin-inputs-1');
+            window.createPinInputs2 = createInputs('create-pin-inputs-2');
+            
+            setupPinInputs(Array.from(document.getElementById('pin-inputs').querySelectorAll('input')), document.getElementById('pin-error-msg'));
+            setupPinInputs(window.createPinInputs1, document.getElementById('create-pin-error-msg'));
+            setupPinInputs(window.createPinInputs2, document.getElementById('create-pin-error-msg'));
+
+            renderPrayerForm();
+            initHistoryListeners();
+        }
+
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('modal-toast');
+            document.getElementById('toast-message').textContent = msg;
+            toast.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] transition-all duration-300 ' + 
+                              (type==='success'?'border-green-500':'border-red-500');
+            document.getElementById('toast-icon').className = 'text-2xl ph-fill ' + (type==='success'?'ph-check-circle text-green-500':'ph-warning-circle text-red-500');
+            toast.classList.remove('hidden', 'opacity-0', 'translate-y-[-20px]');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'translate-y-[-20px]');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3000);
+        }
+
+        async function initAuth() {
+            try {
+                await signInAnonymously(auth);
+                onAuthStateChanged(auth, (user) => {
+                    if (user) { currentUser = user; loadSettings(); loadStudents(); loadJournalsForAdmin(); } 
+                    else { currentUser = null; showToast("Koneksi terputus.", "error"); }
+                });
+            } catch (e) { showToast("Gagal terhubung database.", "error"); }
+        }
+
+        const getCol = (name) => collection(db, 'artifacts', appId, 'public', 'data', name);
+        const getDocRef = (col, docId) => doc(db, 'artifacts', appId, 'public', 'data', col, docId);
+
+        function loadSettings() {
+            onSnapshot(getDocRef('settings', 'global'), (docSnap) => {
+                if (docSnap.exists()) webSettings = { ...webSettings, ...docSnap.data() };
+                applySettingsToUI();
+                renderPrayerForm();
+                if(allJournals.length > 0) renderPublicHistory();
+            });
+        }
+
+        function applySettingsToUI() {
+            document.getElementById('logo-img').src = webSettings.logoUrl;
+            document.getElementById('main-title').textContent = webSettings.mainTitle;
+            document.getElementById('sub-title').textContent = webSettings.subTitle;
+            document.body.style.backgroundColor = webSettings.bgColor;
+            
+            // Fill admin settings fields
+            document.getElementById('set-logo').value = webSettings.logoUrl;
+            document.getElementById('set-title').value = webSettings.mainTitle;
+            document.getElementById('set-subtitle').value = webSettings.subTitle;
+            document.getElementById('set-bg').value = webSettings.bgColor;
+            document.getElementById('set-table-size').value = webSettings.tableFontSize || 13;
+            document.getElementById('set-table-col').value = webSettings.tableColWidth || 70;
+            document.getElementById('set-table-row').value = webSettings.tableRowHeight || 40;
+            document.getElementById('set-table-font').value = webSettings.tableFontFamily || 'Inter';
+
+            // Admin column builder
+            const colContainer = document.getElementById('admin-column-settings'); colContainer.innerHTML = '';
+            BASE_PRAYERS.forEach(p => {
+                const conf = webSettings.prayersConfig[p.id] || { label: p.label, icon: p.icon, visible: true };
+                const currentIcon = conf.icon || p.icon;
+                colContainer.innerHTML += `
+                    <div class="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                        <input type="checkbox" id="col-vis-${p.id}" ${conf.visible?'checked':''} class="w-5 h-5 text-purple-600 rounded cursor-pointer" title="Tampilkan/Sembunyikan">
+                        <div class="flex-1 flex gap-2">
+                            <input type="text" id="col-label-${p.id}" value="${conf.label}" class="border border-gray-300 rounded px-2 py-1 outline-none text-sm w-1/2 font-medium focus:border-purple-500" placeholder="Nama Ibadah">
+                            <input type="text" id="col-icon-${p.id}" value="${currentIcon}" class="border border-gray-300 rounded px-2 py-1 outline-none text-sm w-1/2 font-mono text-gray-500 focus:border-purple-500" placeholder="Class Ikon (ph-...)">
+                        </div>
+                        <i class="${currentIcon} ${p.color} text-2xl w-8 text-center"></i>
+                    </div>
+                `;
+            });
+        }
+
+        function loadStudents() {
+            if (!currentUser) return;
+            onSnapshot(query(getCol('students')), (snapshot) => {
+                studentsData = [];
+                const sel = document.getElementById('student-select'); sel.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+                const adminSel = document.getElementById('admin-manual-student'); 
+                if(adminSel) adminSel.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+                
+                const list = document.getElementById('admin-student-list'); list.innerHTML = '';
+                
+                snapshot.forEach((d) => studentsData.push({ id: d.id, ...d.data() }));
+                studentsData.sort((a,b) => a.name.localeCompare(b.name));
+
+                studentsData.forEach(student => {
+                    const opt = document.createElement('option'); opt.value = student.id; opt.textContent = student.name;
+                    sel.appendChild(opt);
+
+                    if(adminSel) {
+                        const adminOpt = document.createElement('option'); adminOpt.value = student.id; adminOpt.textContent = student.name;
+                        adminSel.appendChild(adminOpt);
+                    }
+
+                    const li = document.createElement('div');
+                    li.className = "flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-200";
+                    const pinStat = student.pin ? '<span class="text-green-600 bg-green-100 px-2 py-0.5 rounded text-[10px] font-bold">PIN OK</span>' : '<span class="text-orange-600 bg-orange-100 px-2 py-0.5 rounded text-[10px] font-bold">NO PIN</span>';
+                    const photoStat = student.photoUrl ? '📷 Ada Foto' : '🖼️ +Foto';
+                    
+                    li.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            ${student.photoUrl ? `<img src="${student.photoUrl}" class="w-8 h-8 rounded-full object-cover border border-gray-300">` : `<div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700 text-xs">${student.name[0]}</div>`}
+                            <div>
+                                <p class="font-bold text-gray-800 text-sm flex items-center gap-1">
+                                    ${student.name}
+                                    <button onclick="editStudentName('${student.id}', '${student.name}')" class="text-gray-400 hover:text-blue-600 ml-1 bg-gray-200 hover:bg-blue-100 px-1.5 py-0.5 rounded transition" title="Ubah Nama"><i class="ph-bold ph-pencil-simple text-xs"></i></button>
+                                </p>
+                                <p class="mt-0.5 flex gap-1">${pinStat}</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="editStudentPhoto('${student.id}', '${student.name}')" class="text-blue-500 bg-blue-100 p-2 rounded-lg text-xs font-bold hover:bg-blue-200 transition" title="Edit Foto">${photoStat}</button>
+                            <button onclick="deleteStudent('${student.id}')" class="text-red-500 bg-red-100 p-2 rounded-lg hover:bg-red-200 transition" title="Hapus Siswa"><i class="ph-bold ph-trash"></i></button>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+                document.getElementById('student-count').textContent = studentsData.length;
+                if(studentsData.length===0) list.innerHTML = '<div class="p-4 text-center text-sm text-gray-500">Kosong</div>';
+                renderPublicHistory();
+            });
+        }
+
+        window.editStudentPhoto = async (id, name) => {
+            const url = prompt(`Masukkan Link URL Foto untuk ${name}\n(Kosongkan untuk menghapus foto):`, "");
+            if(url !== null) {
+                try { await updateDoc(getDocRef('students', id), { photoUrl: url.trim() }); showToast("Foto diperbarui!", "success"); } 
+                catch(e) { showToast("Gagal update foto", "error"); }
+            }
+        };
+
+        window.editStudentName = async (id, oldName) => {
+            const newName = prompt(`Ubah Nama untuk ${oldName}:\n(Masukkan nama baru)`, oldName);
+            if(newName !== null && newName.trim() !== '' && newName !== oldName) {
+                try { 
+                    await updateDoc(getDocRef('students', id), { name: newName.trim().toUpperCase() }); 
+                    showToast("Nama berhasil diubah!", "success"); 
+                } 
+                catch(e) { showToast("Gagal mengubah nama", "error"); }
+            }
+        };
+
+        function renderPrayerForm() {
+            const el = document.getElementById('prayer-list'); el.innerHTML = '';
+            const adminEl = document.getElementById('admin-manual-prayers'); 
+            if(adminEl) adminEl.innerHTML = '';
+
+            const activePrayers = getActivePrayers();
+            activePrayers.forEach(prayer => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3 hover:border-blue-200 cursor-pointer select-none";
+                card.innerHTML = `
+                    <input type="checkbox" id="check-${prayer.id}" value="${prayer.id}" class="prayer-checkbox">
+                    <label for="check-${prayer.id}" class="flex items-center gap-2 cursor-pointer w-full font-bold text-gray-700 text-sm">
+                        <i class="ph-bold ${prayer.icon} text-2xl ${prayer.color}"></i> ${prayer.label}
+                    </label>
+                `;
+                card.addEventListener('click', (e) => { if (e.target.tagName !== 'INPUT') { const cb = card.querySelector('input'); cb.checked = !cb.checked; } });
+                el.appendChild(card);
+
+                if(adminEl) {
+                    const adminCard = document.createElement('div');
+                    adminCard.className = "flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100";
+                    adminCard.innerHTML = `
+                        <input type="checkbox" id="admin-check-${prayer.id}" value="${prayer.id}" class="admin-prayer-checkbox w-4 h-4 cursor-pointer text-blue-600 rounded">
+                        <label for="admin-check-${prayer.id}" class="cursor-pointer text-xs font-bold text-gray-700 truncate">${prayer.label}</label>
+                    `;
+                    adminEl.appendChild(adminCard);
+                }
+            });
+            setupHistoryHeaders();
+        }
+
+        function setupPinInputs(inputs, errEl) {
+            inputs.forEach((input, i) => {
+                input.addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                    if(e.target.value && i < inputs.length - 1) inputs[i + 1].focus();
+                    errEl.classList.add('hidden');
+                });
+                input.addEventListener('keydown', (e) => { if(e.key === 'Backspace' && !e.target.value && i > 0) inputs[i - 1].focus(); });
+            });
+        }
+
+        document.getElementById('btn-simpan-jurnal').addEventListener('click', () => {
+            const sId = document.getElementById('student-select').value;
+            if(!sId) return showToast("Pilih nama Anda dulu dari kotak pilihan.", "error");
+            
+            const checks = []; document.querySelectorAll('.prayer-checkbox:checked').forEach(c => checks.push(c.value));
+            if(checks.length === 0) return showToast("Pilih minimal 1 ibadah.", "error");
+
+            const st = studentsData.find(s => s.id === sId);
+            pendingJournalData = { studentId: st.id, studentName: st.name, date: todayDateString, prayers: checks, timestamp: new Date().toISOString() };
+
+            if(st.pin) {
+                expectedPin = st.pin; document.getElementById('pin-student-name').textContent = st.name;
+                document.querySelectorAll('#pin-inputs input').forEach(i=>i.value=''); 
+                document.getElementById('modal-pin').classList.replace('hidden', 'flex');
+                setTimeout(() => document.querySelector('#pin-inputs input').focus(), 100);
+            } else {
+                document.getElementById('create-pin-student-name').textContent = st.name;
+                window.createPinInputs1.forEach(i=>i.value=''); window.createPinInputs2.forEach(i=>i.value='');
+                document.getElementById('modal-create-pin').classList.replace('hidden', 'flex');
+                setTimeout(() => window.createPinInputs1[0].focus(), 100);
+            }
+        });
+
+        document.getElementById('close-pin-modal').onclick = () => document.getElementById('modal-pin').classList.replace('flex', 'hidden');
+        document.getElementById('close-create-pin-modal').onclick = () => document.getElementById('modal-create-pin').classList.replace('flex', 'hidden');
+
+        document.getElementById('btn-submit-pin').addEventListener('click', () => {
+            const pin = Array.from(document.querySelectorAll('#pin-inputs input')).map(i=>i.value).join('');
+            if(pin === expectedPin) {
+                saveJournal(pendingJournalData); document.getElementById('close-pin-modal').click();
+            } else {
+                document.getElementById('pin-error-msg').classList.remove('hidden');
+                document.querySelectorAll('#pin-inputs input').forEach(i=>i.value=''); document.querySelector('#pin-inputs input').focus();
+            }
+        });
+
+        document.getElementById('btn-submit-new-pin').addEventListener('click', async () => {
+            const p1 = window.createPinInputs1.map(i=>i.value).join('');
+            const p2 = window.createPinInputs2.map(i=>i.value).join('');
+            const err = document.getElementById('create-pin-error-msg');
+            if(p1.length !== 6 || p2.length !== 6) { err.textContent = "Isi 6 digit lengkap."; err.classList.remove('hidden'); return; }
+            if(p1 !== p2) { err.textContent = "PIN tidak cocok."; err.classList.remove('hidden'); return; }
+            
+            try {
+                await updateDoc(getDocRef('students', pendingJournalData.studentId), { pin: p1 });
+                document.getElementById('close-create-pin-modal').click();
+                await saveJournal(pendingJournalData);
+            } catch(e) { err.textContent = "Gagal menyimpan PIN."; err.classList.remove('hidden'); }
+        });
+
+        async function saveJournal(data) {
+            try {
+                // If a journal for this student & date exists, delete it first to avoid duplicate entries (overwrite)
+                const existing = allJournals.find(j => j.studentId === data.studentId && j.date === data.date);
+                if(existing) await deleteDoc(getDocRef('journals', existing.id));
+
+                await addDoc(getCol('journals'), data); showToast("Jurnal berhasil disimpan! ✨", "success");
+                document.getElementById('student-select').value = "";
+                document.querySelectorAll('.prayer-checkbox').forEach(c=>c.checked=false);
+            } catch(e) { showToast("Gagal menyimpan.", "error"); }
+        }
+
+        function loadJournalsForAdmin() {
+            onSnapshot(query(getCol('journals')), (snap) => {
+                allJournals = []; snap.forEach(d => allJournals.push({id:d.id, ...d.data()}));
+                renderAdminJournals(); renderPublicHistory();
+            });
+        }
+
+        function setupHistoryHeaders() {
+            const thead = document.getElementById('history-thead');
+            const activePrayers = getActivePrayers();
+            const colWidth = webSettings.tableColWidth || 70;
+            let html = `<tr><th class="p-3 text-left font-black text-blue-900 sticky left-0 bg-blue-50 z-20 border-r border-blue-100 shadow-sm min-w-[150px]">NAMA SISWA</th>`;
+            activePrayers.forEach(p => {
+                html += `<th class="p-2 font-bold border-r border-blue-100" style="min-width:${colWidth}px; width:${colWidth}px;">
+                    <div class="flex flex-col items-center gap-0.5 ${p.color}">
+                        <i class="ph-fill ${p.icon} text-2xl filter drop-shadow-sm"></i>
+                        <span class="text-[9px] uppercase tracking-wider font-black whitespace-normal w-full text-center leading-tight">${p.label}</span>
+                    </div></th>`;
+            });
+            html += `</tr>`;
+            thead.innerHTML = html;
+        }
+
+        function renderPublicHistory() {
+            if(!historyDateStr) return;
+            const tbody = document.getElementById('history-tbody'); tbody.innerHTML = '';
+            
+            const activeP = getActivePrayers();
+            const fSize = webSettings.tableFontSize || 13;
+            const fFamily = webSettings.tableFontFamily || 'Inter';
+            const rowHeight = webSettings.tableRowHeight || 40;
+            const colWidth = webSettings.tableColWidth || 70;
+            
+            document.getElementById('history-table-container').style.fontSize = `${fSize}px`;
+            document.getElementById('history-table-container').style.fontFamily = `"${fFamily}", sans-serif`;
+
+            if(studentsData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${activeP.length + 1}" class="p-4 text-center">Belum ada siswa yang ditambahkan.</td></tr>`;
+                renderLeaderboards(); return;
+            }
+
+            const dayJournals = allJournals.filter(j => j.date === historyDateStr);
+            studentsData.forEach((s, idx) => {
+                const tr = document.createElement('tr');
+                const bg = idx%2===0 ? 'bg-white' : 'bg-gray-50/50';
+                tr.className = `hover:bg-blue-50/50 transition-colors group ${bg}`;
+                tr.style.height = `${rowHeight}px`;
+                
+                const j = dayJournals.find(x => x.studentId === s.id);
+                const done = j ? j.prayers : [];
+                
+                let rowHtml = `<td class="px-3 py-1 text-left font-bold text-gray-700 sticky left-0 ${bg} group-hover:bg-blue-50/80 z-10 border-r border-gray-100 shadow-[2px_0_5px_rgba(0,0,0,0.02)] whitespace-nowrap">
+                    <div class="flex items-center gap-2">
+                        ${s.photoUrl ? `<img src="${s.photoUrl}" class="w-6 h-6 rounded-full object-cover flex-shrink-0">` : `<div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center font-black text-[10px] text-blue-700 flex-shrink-0">${s.name[0]}</div>`}
+                        <span class="truncate max-w-[120px]">${s.name}</span>
+                    </div>
+                </td>`;
+                
+                activeP.forEach(p => {
+                    if(done.includes(p.id)) {
+                        rowHtml += `<td class="p-1 border-r border-gray-100 text-center" style="min-width:${colWidth}px; width:${colWidth}px;"><i class="ph-bold ph-check text-green-500 text-xl font-black drop-shadow-sm"></i></td>`;
+                    } else {
+                        rowHtml += `<td class="p-1 border-r border-gray-100 text-center" style="min-width:${colWidth}px; width:${colWidth}px;"><i class="ph-bold ph-x text-red-500 text-lg font-black drop-shadow-sm"></i></td>`;
+                    }
+                });
+                tr.innerHTML = rowHtml; tbody.appendChild(tr);
+            });
+            renderLeaderboards();
+        }
+
+        function initHistoryListeners() {
+            const picker = document.getElementById('history-date-picker');
+            picker.addEventListener('change', e => { historyDateStr = e.target.value; renderPublicHistory(); });
+            document.getElementById('btn-prev-history').onclick = () => {
+                const d = new Date(historyDateStr); d.setDate(d.getDate() - 1);
+                historyDateStr = d.toLocaleDateString('en-CA'); picker.value = historyDateStr; renderPublicHistory();
+            };
+            document.getElementById('btn-next-history').onclick = () => {
+                const d = new Date(historyDateStr); d.setDate(d.getDate() + 1);
+                historyDateStr = d.toLocaleDateString('en-CA'); picker.value = historyDateStr; renderPublicHistory();
+            };
+        }
+
+        function getDaysElapsedInMonth(dateStr) {
+            const targetDate = new Date(dateStr);
+            const today = new Date();
+            // If month matches current reality, use today's date, else full month length
+            if (targetDate.getFullYear() === today.getFullYear() && targetDate.getMonth() === today.getMonth()) {
+                return today.getDate();
+            }
+            return new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate();
+        }
+
+        function calculateRankings(monthPrefix, targetGroup, daysElapsed) {
+            const prayersInGroup = BASE_PRAYERS.filter(p => p.group === targetGroup).map(p => p.id);
+            const possiblePerDay = prayersInGroup.length;
+            if(possiblePerDay === 0) return [];
+            
+            const maxScore = daysElapsed * possiblePerDay;
+            const monthJournals = allJournals.filter(j => j.date.startsWith(monthPrefix));
+            
+            const scores = {}; studentsData.forEach(s => scores[s.id] = { ...s, score: 0 });
+            
+            monthJournals.forEach(j => {
+                if(scores[j.studentId]) {
+                    const doneInGroup = j.prayers.filter(pid => prayersInGroup.includes(pid)).length;
+                    scores[j.studentId].score += doneInGroup;
+                }
+            });
+
+            return Object.values(scores)
+                .filter(s => s.score > 0)
+                .map(s => {
+                    const percentage = maxScore > 0 ? Math.round((s.score / maxScore) * 100) : 0;
+                    return { ...s, percentage: percentage > 100 ? 100 : percentage };
+                })
+                .sort((a,b) => b.score - a.score);
+        }
+
+        function renderLeaderboards() {
+            if(!historyDateStr) return;
+            const dateObj = new Date(historyDateStr);
+            const monthPrefix = historyDateStr.slice(0, 7);
+            document.getElementById('leaderboard-month-label').textContent = `BULAN: ${dateObj.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`;
+            
+            const daysElapsed = getDaysElapsedInMonth(historyDateStr);
+            const container = document.getElementById('leaderboard-categories');
+            container.innerHTML = '';
+
+            // The 4 requested categories
+            const categories = [
+                { id: 'sholat5', title: 'Rajin Sholat 5 Waktu', icon: 'ph-mosque', color: 'from-blue-400 to-blue-600' },
+                { id: 'dhuha', title: 'Rajin Sholat Dhuha', icon: 'ph-sun', color: 'from-yellow-400 to-orange-500' },
+                { id: 'murajaah', title: 'Rajin Muraja\'ah', icon: 'ph-book-open-text', color: 'from-emerald-400 to-emerald-600' },
+                { id: 'tilawah', title: 'Rajin Tilawah', icon: 'ph-book-open', color: 'from-purple-400 to-purple-600' }
+            ];
+
+            categories.forEach(cat => {
+                const allRanks = calculateRankings(monthPrefix, cat.id, daysElapsed);
+                const ranks = allRanks.slice(0, 3);
+                
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-2xl shadow-md border border-gray-100 flex flex-col items-center hover:shadow-lg transition-shadow relative";
+                card.innerHTML = `<h4 class="text-lg font-black text-center mb-6 text-transparent bg-clip-text bg-gradient-to-r ${cat.color} drop-shadow-sm flex items-center justify-center gap-2"><i class="ph-fill ${cat.icon} text-gray-700"></i> ${cat.title}</h4>`;
+                
+                if(ranks.length === 0) {
+                    card.innerHTML += `<p class="text-sm text-gray-400 font-bold mb-4">Belum ada data bulan ini.</p>`;
+                } else {
+                    const podiumDiv = document.createElement('div');
+                    podiumDiv.className = "flex justify-center items-end gap-2 md:gap-4 w-full h-48 px-2 mb-2";
+                    // Display Order for Podium: 2nd, 1st, 3rd
+                    const displayOrder = [];
+                    if(ranks[1]) displayOrder.push({ ...ranks[1], rank: 2 });
+                    if(ranks[0]) displayOrder.push({ ...ranks[0], rank: 1 });
+                    if(ranks[2]) displayOrder.push({ ...ranks[2], rank: 3 });
+
+                    displayOrder.forEach(item => {
+                        const is1 = item.rank === 1;
+                        const h = is1 ? 'h-36' : (item.rank===2 ? 'h-28' : 'h-24');
+                        const bg = is1 ? 'bg-gradient-to-t from-yellow-400 to-yellow-200' : (item.rank===2 ? 'bg-gradient-to-t from-gray-400 to-gray-200' : 'bg-gradient-to-t from-amber-700 to-amber-500');
+                        const crown = is1 ? '<i class="ph-fill ph-crown text-yellow-500 text-3xl absolute -top-8 animate-bounce filter drop-shadow-md"></i>' : '';
+                        
+                        const photoEl = item.photoUrl 
+                            ? `<img src="${item.photoUrl}" class="w-full h-full object-cover rounded-full">`
+                            : `<span class="text-xl font-black">${item.name[0]}</span>`;
+
+                        podiumDiv.innerHTML += `
+                            <div class="flex flex-col items-center w-1/3 relative group cursor-pointer">
+                                ${crown}
+                                <div class="w-12 h-12 md:w-14 md:h-14 bg-white rounded-full flex items-center justify-center shadow-lg border-4 ${is1?'border-yellow-400':(item.rank===2?'border-gray-300':'border-amber-600')} mb-[-20px] z-20 text-gray-700 overflow-hidden relative group-hover:scale-110 transition-transform">
+                                    ${photoEl}
+                                </div>
+                                <div class="w-full ${bg} rounded-t-xl ${h} flex flex-col justify-end items-center p-2 text-white shadow-inner border-t border-white/50 relative z-10 transition-all">
+                                    <p class="font-black text-[10px] md:text-xs truncate w-full text-center drop-shadow-md text-gray-900 leading-tight">${item.name}</p>
+                                    <div class="bg-black/30 px-2 py-0.5 rounded-lg mt-1 text-[10px] font-black tracking-wider text-white flex items-center gap-1"><i class="ph-bold ph-chart-line-up"></i> ${item.percentage}%</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    card.appendChild(podiumDiv);
+                    
+                    // Tambahan tombol Lihat Semua
+                    const btnLihat = document.createElement('button');
+                    btnLihat.className = "mt-4 text-xs font-bold text-blue-500 hover:text-blue-700 hover:underline px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors";
+                    btnLihat.textContent = "Lihat Semua Peringkat";
+                    btnLihat.onclick = () => window.showFullRanking(cat.title, cat.icon, allRanks);
+                    card.appendChild(btnLihat);
+                }
+                container.appendChild(card);
+            });
+        }
+
+        window.showFullRanking = (title, iconClass, allRanks) => {
+            document.getElementById('all-ranks-title').innerHTML = `<i class="ph-fill ${iconClass} text-blue-600"></i> ${title}`;
+            const listEl = document.getElementById('all-ranks-list');
+            listEl.innerHTML = '';
+            
+            if(allRanks.length === 0) {
+                listEl.innerHTML = '<p class="text-center text-gray-500 py-4">Belum ada data.</p>';
+            } else {
+                allRanks.forEach((s, i) => {
+                    const isTop3 = i < 3;
+                    const rankBadge = isTop3 ? 
+                        `<div class="w-8 h-8 rounded-full flex items-center justify-center font-black text-white ${i===0?'bg-yellow-500':(i===1?'bg-gray-400':'bg-amber-600')}">#${i+1}</div>` : 
+                        `<div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-gray-500 bg-gray-100">#${i+1}</div>`;
+                    
+                    listEl.innerHTML += `
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-blue-300 transition-colors">
+                            <div class="flex items-center gap-3">
+                                ${rankBadge}
+                                ${s.photoUrl ? `<img src="${s.photoUrl}" class="w-10 h-10 rounded-full object-cover shadow-sm">` : `<div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-black text-blue-700">${s.name[0]}</div>`}
+                                <span class="font-bold text-gray-800">${s.name}</span>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-black text-blue-700">${s.percentage}%</p>
+                                <p class="text-[10px] text-gray-500 font-bold">${s.score}x Ibadah</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('modal-all-ranks').classList.replace('hidden', 'flex');
+        };
+
+        let logoClicks=0; let logoTimer;
+        document.getElementById('logo-img').onclick = () => {
+            logoClicks++; clearTimeout(logoTimer);
+            if(logoClicks >= 6) { document.getElementById('admin-panel').classList.remove('hidden'); logoClicks=0; }
+            else logoTimer = setTimeout(()=>logoClicks=0, 1500);
+        };
+        document.getElementById('btn-close-admin').onclick = () => document.getElementById('admin-panel').classList.add('hidden');
+
+        window.switchAdminTab = (tabId) => {
+            document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.add('hidden'));
+            document.querySelectorAll('.admin-tab-btn').forEach(b => {
+                b.classList.remove('bg-blue-600', 'text-white'); b.classList.add('bg-gray-200', 'text-gray-600');
+            });
+            document.getElementById(tabId).classList.remove('hidden');
+            const btn = document.getElementById(tabId === 'tab-data' ? 'btn-tab-data' : (tabId === 'tab-settings' ? 'btn-tab-settings' : (tabId === 'tab-rank' ? 'btn-tab-rank' : 'btn-tab-entry')));
+            if(btn) { btn.classList.add('bg-blue-600', 'text-white'); btn.classList.remove('bg-gray-200', 'text-gray-600'); }
+        };
+
+        document.getElementById('btn-add-student').onclick = async () => {
+            const name = document.getElementById('admin-new-student-name').value.trim();
+            if(!name) return showToast("Isi nama siswa.", "error");
+            try { await addDoc(getCol('students'), { name, pin: null, photoUrl: null }); document.getElementById('admin-new-student-name').value=''; showToast("Siswa ditambahkan", "success"); }
+            catch(e) { showToast("Gagal menambah", "error"); }
+        };
+
+        const batchSiswa = ["ABIN", "ADZKI", "ADZKIRA", "ALDI", "ALIEF", "ALTAN", "APRIL", "ARSYAD", "DZAKI", "ENDI", "EVELYN", "FAYI", "FELISHA", "GALUH", "GENDIS", "HANAN", "JEMBAR", "KARIN", "MIKAYLA", "MUTIA", "MYEMYE", "NABIL", "NUHA", "NUSA", "QEELA", "RAFIF", "RAJWA", "REINA", "SAFA", "SHOFI", "ZAHRO", "ZAIN", "ZAYYAN", "ZHAFRAN"];
+        document.getElementById('btn-import-students').onclick = async () => {
+            let added = 0; document.getElementById('btn-import-students').textContent = 'Memproses... (Mohon Tunggu)';
+            for (const name of batchSiswa) {
+                if(!studentsData.some(s=>s.name.toUpperCase()===name)) {
+                    await addDoc(getCol('students'), { name, pin: null, photoUrl: null }); added++;
+                }
+            }
+            document.getElementById('btn-import-students').innerHTML = '<i class="ph-bold ph-users-three"></i> Import 34 Data Siswa';
+            showToast(`${added} siswa baru ditambahkan`, "success");
+        };
+
+        window.deleteStudent = async (id) => {
+            if(confirm("Apakah Anda yakin ingin menghapus siswa ini beserta riwayatnya?")) { await deleteDoc(getDocRef('students', id)); showToast("Siswa Dihapus", "success"); }
+        };
+        window.deleteJournal = async (id) => {
+            if(confirm("Hapus entri ibadah ini?")) { await deleteDoc(getDocRef('journals', id)); showToast("Riwayat Dihapus", "success"); }
+        };
+
+        function renderAdminJournals() {
+            const tbody = document.getElementById('admin-journal-list'); tbody.innerHTML = '';
+            const dFilter = document.getElementById('admin-filter-date').value;
+            const filtered = allJournals.filter(j => j.date === dFilter).sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+            if(filtered.length===0) return tbody.innerHTML = '<tr><td class="p-4 text-center text-gray-500">Belum ada riwayat pada tanggal ini.</td></tr>';
+            filtered.forEach(j => {
+                tbody.innerHTML += `<tr class="border-b border-gray-50 hover:bg-gray-50">
+                    <td class="p-2 font-bold">${j.studentName}</td>
+                    <td class="p-2 text-xs text-gray-500 truncate max-w-[120px]">${j.prayers.length} ibadah diisi</td>
+                    <td class="p-2 text-right"><button onclick="deleteJournal('${j.id}')" class="text-red-500 p-1 hover:bg-red-100 rounded"><i class="ph-bold ph-trash"></i></button></td>
+                </tr>`;
+            });
+        }
+        document.getElementById('admin-filter-date').onchange = renderAdminJournals;
+
+        document.getElementById('btn-save-settings').onclick = async () => {
+            const btn = document.getElementById('btn-save-settings'); btn.textContent = 'Menyimpan...';
+            
+            const pConfig = {};
+            BASE_PRAYERS.forEach(p => {
+                pConfig[p.id] = {
+                    label: document.getElementById(`col-label-${p.id}`).value,
+                    icon: document.getElementById(`col-icon-${p.id}`).value,
+                    visible: document.getElementById(`col-vis-${p.id}`).checked
+                };
+            });
+
+            const newSet = {
+                logoUrl: document.getElementById('set-logo').value,
+                mainTitle: document.getElementById('set-title').value,
+                subTitle: document.getElementById('set-subtitle').value,
+                bgColor: document.getElementById('set-bg').value,
+                tableFontSize: parseInt(document.getElementById('set-table-size').value) || 13,
+                tableColWidth: parseInt(document.getElementById('set-table-col').value) || 70,
+                tableRowHeight: parseInt(document.getElementById('set-table-row').value) || 40,
+                tableFontFamily: document.getElementById('set-table-font').value,
+                prayersConfig: pConfig
+            };
+
+            try { await setDoc(getDocRef('settings', 'global'), newSet, {merge:true}); showToast("Pengaturan Tersimpan!", "success"); }
+            catch(e) { showToast("Gagal menyimpan pengaturan.", "error"); }
+            finally { btn.textContent = 'Simpan Semua Pengaturan'; }
+        };
+
+        document.getElementById('btn-generate-report').onclick = () => {
+            const start = document.getElementById('report-start').value;
+            const end = document.getElementById('report-end').value;
+            const cat = document.getElementById('report-category').value;
+            if(!start || !end) return showToast("Pilih tanggal awal dan akhir", "error");
+            if(new Date(start) > new Date(end)) return showToast("Rentang tanggal tidak valid", "error");
+
+            const diffTime = Math.abs(new Date(end) - new Date(start));
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; 
+            
+            let targetGroup = [];
+            if(cat === 'all') targetGroup = BASE_PRAYERS.map(p=>p.id);
+            else targetGroup = BASE_PRAYERS.filter(p=>p.group===cat).map(p=>p.id);
+            
+            const maxScore = diffDays * targetGroup.length;
+            const filteredJournals = allJournals.filter(j => j.date >= start && j.date <= end);
+            
+            const scores = {}; studentsData.forEach(s => scores[s.id] = { ...s, score: 0 });
+            filteredJournals.forEach(j => {
+                const count = j.prayers.filter(pid => targetGroup.includes(pid)).length;
+                if(scores[j.studentId]) scores[j.studentId].score += count;
+            });
+
+            const ranks = Object.values(scores).filter(s => s.score > 0).sort((a,b)=>b.score - a.score);
+            
+            const tbody = document.getElementById('report-tbody'); tbody.innerHTML = '';
+            if(ranks.length === 0) return tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center">Tidak ada data untuk rentang ini.</td></tr>';
+            
+            ranks.forEach((r, idx) => {
+                const pct = maxScore > 0 ? Math.min(100, Math.round((r.score / maxScore)*100)) : 0;
+                tbody.innerHTML += `
+                    <tr class="hover:bg-emerald-50/50 transition-colors">
+                        <td class="p-3 text-center font-black text-gray-500">#${idx+1}</td>
+                        <td class="p-3 font-bold text-gray-800 flex items-center gap-2">
+                            ${r.photoUrl ? `<img src="${r.photoUrl}" class="w-6 h-6 rounded-full object-cover">` : `<div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px]">${r.name[0]}</div>`} ${r.name}
+                        </td>
+                        <td class="p-3 text-center font-bold text-emerald-600">${r.score} Kali</td>
+                        <td class="p-3 text-center">
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-1"><div class="bg-emerald-600 h-2.5 rounded-full" style="width: ${pct}%"></div></div>
+                            <span class="text-xs font-bold text-gray-500">${pct}%</span>
+                        </td>
+                    </tr>
+                `;
+            });
+        };
+
+        // ADMIN MANUAL SAVE
+        const btnAdminSave = document.getElementById('btn-admin-manual-save');
+        if(btnAdminSave) {
+            btnAdminSave.onclick = async () => {
+                const date = document.getElementById('admin-manual-date').value;
+                const sId = document.getElementById('admin-manual-student').value;
+                if(!date || !sId) return showToast("Pilih tanggal dan siswa", "error");
+                
+                const checks = [];
+                document.querySelectorAll('.admin-prayer-checkbox:checked').forEach(c => checks.push(c.value));
+                if(checks.length === 0) return showToast("Pilih minimal 1 ibadah", "error");
+
+                const st = studentsData.find(s => s.id === sId);
+                const existing = allJournals.find(j => j.studentId === sId && j.date === date);
+                
+                try {
+                    btnAdminSave.textContent = "Menyimpan...";
+                    if(existing) await deleteDoc(getDocRef('journals', existing.id));
+                    await addDoc(getCol('journals'), { studentId: sId, studentName: st.name, date: date, prayers: checks, timestamp: new Date().toISOString() });
+                    showToast(`Jurnal ${st.name} disimpan!`, "success");
+                    document.querySelectorAll('.admin-prayer-checkbox').forEach(c => c.checked = false);
+                    document.getElementById('admin-manual-student').value = "";
+                } catch(e) { showToast("Gagal menyimpan", "error"); }
+                finally { btnAdminSave.textContent = "Simpan Entri Siswa"; }
+            };
+        }
+
+        // ADMIN BULK SAVE
+        const btnAdminBulk = document.getElementById('btn-admin-bulk-save');
+        if(btnAdminBulk) {
+            btnAdminBulk.onclick = async () => {
+                const text = document.getElementById('admin-bulk-text').value.trim();
+                if(!text) return showToast("Teks data masih kosong!", "error");
+                
+                const lines = text.split('\n').map(l=>l.trim()).filter(l=>l);
+                if(lines.length < 2) return showToast("Format salah. Baris pertama harus tanggal.", "error");
+                
+                const dateStr = lines[0];
+                const parts = dateStr.split('-');
+                if(parts.length !== 3) return showToast("Format tanggal harus DD-MM-YYYY (contoh 03-08-2026)", "error");
+                const isoDate = `${parts[2]}-${parts[1]}-${parts[0]}`; // YYYY-MM-DD
+                
+                btnAdminBulk.textContent = "Memproses...";
+                let successCount = 0;
+                let failCount = 0;
+
+                for(let i=1; i<lines.length; i++) {
+                    const rowParts = lines[i].split(' ').filter(p=>p);
+                    if(rowParts.length < 3) continue;
+                    
+                    const nameQuery = rowParts[0].toUpperCase();
+                    const student = studentsData.find(s => s.name.toUpperCase() === nameQuery || s.name.toUpperCase().includes(nameQuery));
+                    
+                    if(!student) { failCount++; continue; }
+                    
+                    const donePrayers = [];
+                    for(let p=1; p<rowParts.length; p+=2) {
+                        const pNameRaw = rowParts[p].toLowerCase();
+                        // Hapus karakter aneh (misal: muraja'ah -> murajaah)
+                        const pName = pNameRaw.replace(/[^a-z0-9]/g, '');
+                        const status = rowParts[p+1]?.toLowerCase();
+                        
+                        if(status === 'true') {
+                            const matched = BASE_PRAYERS.find(b => b.id.toLowerCase() === pName || b.label.toLowerCase().replace(/[^a-z0-9]/g, '') === pName);
+                            if(matched) donePrayers.push(matched.id);
+                        }
+                    }
+                    
+                    if(donePrayers.length > 0) {
+                        try {
+                            const existing = allJournals.find(j => j.studentId === student.id && j.date === isoDate);
+                            if(existing) await deleteDoc(getDocRef('journals', existing.id));
+                            await addDoc(getCol('journals'), {
+                                studentId: student.id, studentName: student.name, date: isoDate, prayers: donePrayers, timestamp: new Date().toISOString()
+                            });
+                            successCount++;
+                        } catch(e) { failCount++; }
+                    }
+                }
+                btnAdminBulk.textContent = "Proses Bulk Data";
+                showToast(`Selesai! Berhasil: ${successCount} siswa. Gagal/Tdk Ketemu: ${failCount}`, successCount > 0 ? "success" : "error");
+                if(successCount > 0) document.getElementById('admin-bulk-text').value = '';
+            };
+        }
+
+        window.onload = () => { initUI(); initAuth(); };
+    </script>
+</body>
+</html>
