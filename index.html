@@ -105,9 +105,14 @@
                 <!-- Checkboxes injected by JS -->
             </div>
 
-            <button id="btn-simpan-jurnal" class="w-full bg-[#243B8B] hover:bg-[#1a2b66] text-white font-bold py-4 px-4 rounded-xl shadow-lg transition-all active:scale-[0.98] tracking-wide mb-10 relative z-10">
+            <button id="btn-simpan-jurnal" class="w-full bg-[#243B8B] hover:bg-[#1a2b66] text-white font-bold py-4 px-4 rounded-xl shadow-lg transition-all active:scale-[0.98] tracking-wide mb-6 relative z-10">
                 SIMPAN JURNAL
             </button>
+            
+            <div class="text-center px-4 mb-10 relative z-10">
+                <p class="text-xs md:text-sm text-gray-600 italic font-medium">"Hendaklah kalian berlaku jujur, karena kejujuran membawa kepada kebaikan, dan kebaikan membawa ke surga."</p>
+                <p class="text-[10px] md:text-xs text-gray-500 font-bold mt-1">(HR. Bukhari & Muslim)</p>
+            </div>
         </div>
     </main>
 
@@ -153,6 +158,12 @@
         </div>
     </div>
 
+    <!-- Footer -->
+    <footer class="w-full text-center pb-8 pt-4">
+        <p class="text-sm text-gray-600 font-medium">Made with ❤️ by Ust. Zen</p>
+        <p class="text-xs text-gray-500 mt-1">Copyright @2025. SD Muhammadiyah Tanjung</p>
+    </footer>
+    
     <!-- PIN Modals -->
     <div id="modal-pin" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-gray-100">
@@ -649,7 +660,12 @@ document.getElementById('leaderboard-month-select').addEventListener('change', r
         window.editStudentPhoto = async (id, name) => {
             const url = prompt(`Masukkan Link URL Foto untuk ${name}\n(Kosongkan untuk menghapus foto):`, "");
             if(url !== null) {
-                try { await updateDoc(getDocRef('students', id), { photoUrl: url.trim() }); showToast("Foto diperbarui!", "success"); } 
+                let finalUrl = url.trim();
+                // Deteksi jika link ada isinya dan belum diproses proxy, maka kompres ke 256px
+                if (finalUrl && !finalUrl.includes('wsrv.nl')) {
+                    finalUrl = `https://wsrv.nl/?url=${encodeURIComponent(finalUrl)}&w=256&fit=cover`;
+                }
+                try { await updateDoc(getDocRef('students', id), { photoUrl: finalUrl }); showToast("Foto diperbarui!", "success"); } 
                 catch(e) { showToast("Gagal update foto", "error"); }
             }
         };
@@ -773,12 +789,35 @@ card.addEventListener('click', () => {
         }
 
         function loadJournalsForAdmin() {
-    onSnapshot(query(getCol('journals')), (snap) => {
-        allJournals = []; snap.forEach(d => allJournals.push({id:d.id, ...d.data()}));
-        updateMonthDropdown(); // Menambahkan trigger update dropdown
-        renderAdminJournals(); renderPublicHistory();
-    });
-}
+            onSnapshot(query(getCol('journals')), (snap) => {
+                allJournals = []; snap.forEach(d => allJournals.push({id:d.id, ...d.data()}));
+                updateMonthDropdown();
+                renderAdminJournals(); renderPublicHistory();
+            });
+        }
+
+        function updateMonthDropdown() {
+            const select = document.getElementById('leaderboard-month-select');
+            if(!select) return;
+            const currentVal = select.value;
+            const months = new Set();
+            
+            if(todayDateString) months.add(todayDateString.slice(0, 7));
+            allJournals.forEach(j => months.add(j.date.slice(0, 7)));
+
+            const sortedMonths = Array.from(months).sort().reverse();
+            select.innerHTML = '';
+            sortedMonths.forEach(m => {
+                const dateObj = new Date(m + "-01");
+                const label = dateObj.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+                select.innerHTML += `<option value="${m}">${label}</option>`;
+            });
+            
+            if (currentVal && sortedMonths.includes(currentVal)) select.value = currentVal;
+            
+            // Pasang event listener agar saat dipilih langsung mengubah peringkat
+            select.addEventListener('change', renderLeaderboards);
+        }
 
 function updateMonthDropdown() {
     const select = document.getElementById('leaderboard-month-select');
@@ -931,6 +970,7 @@ function updateMonthDropdown() {
     }
 
     const container = document.getElementById('leaderboard-categories');
+        
 
             // The 4 requested categories
             const categories = [
