@@ -105,9 +105,14 @@
                 <!-- Checkboxes injected by JS -->
             </div>
 
-            <button id="btn-simpan-jurnal" class="w-full bg-[#243B8B] hover:bg-[#1a2b66] text-white font-bold py-4 px-4 rounded-xl shadow-lg transition-all active:scale-[0.98] tracking-wide mb-10 relative z-10">
+            <button id="btn-simpan-jurnal" class="w-full bg-[#243B8B] hover:bg-[#1a2b66] text-white font-bold py-4 px-4 rounded-xl shadow-lg transition-all active:scale-[0.98] tracking-wide mb-6 relative z-10">
                 SIMPAN JURNAL
             </button>
+            
+            <div class="text-center px-4 mb-10 relative z-10">
+                <p class="text-xs md:text-sm text-gray-600 italic font-medium">"Hendaklah kalian berlaku jujur, karena kejujuran membawa kepada kebaikan, dan kebaikan membawa ke surga."</p>
+                <p class="text-[10px] md:text-xs text-gray-500 font-bold mt-1">(HR. Bukhari & Muslim)</p>
+            </div>
         </div>
     </main>
 
@@ -149,7 +154,11 @@
             </div>
         </div>
     </div>
-
+		<!-- Footer -->
+    <footer class="w-full text-center pb-8 pt-4">
+        <p class="text-sm text-gray-600 font-medium">Made with ❤️ by Ust. Zen</p>
+        <p class="text-xs text-gray-500 mt-1">Copyright @2025. SD Muhammadiyah Tanjung</p>
+    </footer>
     <!-- PIN Modals -->
     <div id="modal-pin" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-gray-100">
@@ -501,24 +510,24 @@
 
             renderPrayerForm();
             initHistoryListeners();
+						document.getElementById('student-select').addEventListener('change', (e) => {
+				const sId = e.target.value;
+				// Reset seluruh centang
+				document.querySelectorAll('.prayer-checkbox').forEach(c => c.checked = false);
+				if(!sId) return;
 
-            document.getElementById('student-select').addEventListener('change', (e) => {
-    const sId = e.target.value;
-    // Reset seluruh centang
-    document.querySelectorAll('.prayer-checkbox').forEach(c => c.checked = false);
-    if(!sId) return;
+				// Cek apakah hari ini sudah ada jurnal yang disimpan
+				const existing = allJournals.find(j => j.studentId === sId && j.date === todayDateString);
+				if(existing) {
+					existing.prayers.forEach(pid => {
+						const cb = document.getElementById(`check-${pid}`);
+						if(cb) cb.checked = true; // Otomatis tercentang
+					});
+				}
+			});
 
-    // Cek apakah hari ini sudah ada jurnal yang disimpan
-    const existing = allJournals.find(j => j.studentId === sId && j.date === todayDateString);
-    if(existing) {
-        existing.prayers.forEach(pid => {
-            const cb = document.getElementById(`check-${pid}`);
-            if(cb) cb.checked = true; // Otomatis tercentang
-        });
-    }
-});
-
-document.getElementById('leaderboard-month-select').addEventListener('change', renderLeaderboards); // Ini trigger untuk dropdown bulan
+			
+			
         }
 
         function showToast(msg, type = 'info') {
@@ -672,15 +681,15 @@ document.getElementById('leaderboard-month-select').addEventListener('change', r
                 const card = document.createElement('div');
                 card.className = "bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3 hover:border-blue-200 cursor-pointer select-none";
                 card.innerHTML = `
-    <input type="checkbox" id="check-${prayer.id}" value="${prayer.id}" class="prayer-checkbox pointer-events-none">
-    <div class="flex items-center gap-2 w-full font-bold text-gray-700 text-sm pointer-events-none">
-        <i class="ph-bold ${prayer.icon} text-2xl ${prayer.color}"></i> ${prayer.label}
-    </div>
-`;
-card.addEventListener('click', () => { 
-    const cb = card.querySelector('input'); 
-    cb.checked = !cb.checked; 
-});
+					<input type="checkbox" id="check-${prayer.id}" value="${prayer.id}" class="prayer-checkbox pointer-events-none">
+					<div class="flex items-center gap-2 w-full font-bold text-gray-700 text-sm pointer-events-none">
+					<i class="ph-bold ${prayer.icon} text-2xl ${prayer.color}"></i> ${prayer.label}
+					</div>
+					`;
+				card.addEventListener('click', () => { 
+				const cb = card.querySelector('input'); 
+				cb.checked = !cb.checked; 
+				});
                 el.appendChild(card);
 
                 if(adminEl) {
@@ -912,22 +921,13 @@ function updateMonthDropdown() {
         }
 
         function renderLeaderboards() {
-    const select = document.getElementById('leaderboard-month-select');
-    if(!select || !select.value) return;
-    const monthPrefix = select.value;
-    
-    let daysElapsed;
-    const today = new Date();
-    const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-    
-    if (monthPrefix === currentMonthStr) {
-        daysElapsed = today.getDate();
-    } else {
-        const [yyyy, mm] = monthPrefix.split('-');
-        daysElapsed = new Date(yyyy, mm, 0).getDate();
-    }
-
-    const container = document.getElementById('leaderboard-categories');
+            if(!historyDateStr) return;
+            const dateObj = new Date(historyDateStr);
+            const monthPrefix = historyDateStr.slice(0, 7);
+            document.getElementById('leaderboard-month-label').textContent = `BULAN: ${dateObj.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`;
+            
+            const daysElapsed = getDaysElapsedInMonth(historyDateStr);
+            const container = document.getElementById('leaderboard-categories');
             container.innerHTML = '';
 
             // The 4 requested categories
@@ -1216,21 +1216,21 @@ function updateMonthDropdown() {
                     
                     const donePrayers = [];
                     for(let p=1; p<rowParts.length; p+=2) {
-    const pNameRaw = rowParts[p].toLowerCase();
-    let pName = pNameRaw.replace(/[^a-z0-9]/g, '');
-    
-    // Normalisasi khusus MURAJA'AH
-    if (pName === 'murajaah' || pName === 'murojaah' || pNameRaw === "muraja'ah" || pNameRaw === "muroja'ah") {
-        pName = 'murajaah';
-    }
+						const pNameRaw = rowParts[p].toLowerCase();
+						let pName = pNameRaw.replace(/[^a-z0-9]/g, '');
+						
+						// Normalisasi khusus MURAJA'AH
+						if (pName === 'murajaah' || pName === 'murojaah' || pNameRaw === "muraja'ah" || pNameRaw === "muroja'ah") {
+							pName = 'murajaah';
+						}
 
-    const status = rowParts[p+1]?.toLowerCase();
-    
-    if(status === 'true') {
-        const matched = BASE_PRAYERS.find(b => b.id.toLowerCase() === pName || b.label.toLowerCase().replace(/[^a-z0-9]/g, '') === pName);
-        if(matched) donePrayers.push(matched.id);
-    }
-}
+						const status = rowParts[p+1]?.toLowerCase();
+						
+						if(status === 'true') {
+							const matched = BASE_PRAYERS.find(b => b.id.toLowerCase() === pName || b.label.toLowerCase().replace(/[^a-z0-9]/g, '') === pName);
+							if(matched) donePrayers.push(matched.id);
+						}
+					}
                     
                     if(donePrayers.length > 0) {
                         try {
