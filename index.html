@@ -660,12 +660,7 @@ document.getElementById('leaderboard-month-select').addEventListener('change', r
         window.editStudentPhoto = async (id, name) => {
             const url = prompt(`Masukkan Link URL Foto untuk ${name}\n(Kosongkan untuk menghapus foto):`, "");
             if(url !== null) {
-                let finalUrl = url.trim();
-                // Deteksi jika link ada isinya dan belum diproses proxy, maka kompres ke 256px
-                if (finalUrl && !finalUrl.includes('wsrv.nl')) {
-                    finalUrl = `https://wsrv.nl/?url=${encodeURIComponent(finalUrl)}&w=256&fit=cover`;
-                }
-                try { await updateDoc(getDocRef('students', id), { photoUrl: finalUrl }); showToast("Foto diperbarui!", "success"); } 
+                try { await updateDoc(getDocRef('students', id), { photoUrl: url.trim() }); showToast("Foto diperbarui!", "success"); } 
                 catch(e) { showToast("Gagal update foto", "error"); }
             }
         };
