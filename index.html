@@ -1188,8 +1188,8 @@
     <!-- LOGIC JAVASCRIPT & STATE MANAGEMENT -->
     <!-- ============================================== -->
     <!-- SDK Firebase Compat -->
-    <script src="[https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js](https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js)"></script>
-    <script src="[https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js](https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js)"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script>
         // ==============================================
         // MOCK FIREBASE CONFIGURATION (Simulasi Realtime)
@@ -1217,7 +1217,9 @@
         function syncToFirebase(collection, data) {
             db.ref(collection).set(data)
                 .then(() => {
-                    showToast(`Data ${collection} tersinkron ke Firebase`, true);
+                    // Hanya tampilkan toast jika aksi dilakukan user, bukan saat auto-sync load awal
+                    // showToast(`Data ${collection} tersinkron ke Firebase`, true);
+                    console.log(`Data ${collection} tersinkron ke Firebase`);
                 })
                 .catch((error) => {
                     console.error("Error Firebase:", error);
@@ -1268,11 +1270,14 @@
         let userPasswords = {
             'dev': 'ipinerz123!@#',
             'admin': '123456',
-            'guru': '123456',
+            'guru': '123456'
 		};
-        // FUNGSI INISIALISASI UNTUK MENGAMBIL DATA DARI FIREBASE SAAT AWAL
+
+        let isFirstLoad = true;
+
+        // FUNGSI INISIALISASI UNTUK MENGAMBIL DATA DARI FIREBASE SECARA REALTIME
         function initFirebaseMock() {
-            db.ref().on('value').then((snapshot) => {
+            db.ref().on('value', (snapshot) => {
                 if (snapshot.exists()) {
                     const data = snapshot.val();
                     
@@ -1295,6 +1300,30 @@
                         userPasswords['dev'] = 'ipinerz123!@#';
                         syncToFirebase('passwords', userPasswords);
                     }
+
+                    // Render Ulang UI Jika Sudah Login
+                    if (!isFirstLoad && loggedInUser !== '') {
+                        if (currentRole === 'dev') {
+                            renderDevData();
+                            updateDevRealtimeStats();
+                        } else if (currentRole === 'admin') {
+                            renderAdminData();
+                            if(document.querySelector('#tab-pencapaian') && document.querySelector('#tab-pencapaian').classList.contains('block')) {
+                                renderPencapaianHafalan('admin-tabel-pencapaian', 'admin');
+                            }
+                        } else if (currentRole === 'guru') {
+                            renderGuruData();
+                            if(document.querySelector('#tab-guru-pencapaian') && document.querySelector('#tab-guru-pencapaian').classList.contains('block')) {
+                                renderPencapaianHafalan('guru-tabel-pencapaian', 'guru');
+                            }
+                        } else if (currentRole === 'wali') {
+                            if(document.querySelector('#tab-wali-pencapaian') && document.querySelector('#tab-wali-pencapaian').classList.contains('block')) {
+                                renderPencapaianHafalan('wali-tabel-pencapaian', 'wali');
+                            }
+                        }
+                    }
+                    isFirstLoad = false;
+
                 } else {
                     // Jika Database Firebase masih kosong sama sekali (Pertama kali run), 
                     // upload State/Data Default bawaan aplikasi ke server Firebase.
@@ -1305,8 +1334,9 @@
                     syncToFirebase('akun', userAccounts);
                     syncToFirebase('lembaga', devInstitutions);
                     syncToFirebase('passwords', userPasswords);
+                    isFirstLoad = false;
                 }
-            }).catch((error) => {
+            }, (error) => {
                 console.error("Gagal koneksi ke Firebase:", error);
                 showToast("Gagal mengambil data dari Server Firebase", false);
             });
@@ -3087,3 +3117,4 @@
     </script>
 </body>
 </html>
+```eof
