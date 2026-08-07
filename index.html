@@ -1251,11 +1251,13 @@
         let isFirstLoad = true;
 
         // FUNGSI INISIALISASI UNTUK MENGAMBIL DATA DARI FIREBASE SECARA REALTIME
+        // FUNGSI INISIALISASI UNTUK MENGAMBIL DATA DARI FIREBASE SECARA REALTIME
         function initFirebaseMock() {
             db.ref().on('value', (snapshot) => {
                 if (snapshot.exists()) {
                     const data = snapshot.val();
                     
+                    // Update dengan data real dari Firebase
                     if(data.siswa) appState.siswa = data.siswa;
                     if(data.guru) appState.guru = data.guru;
                     if(data.halaqah) appState.halaqah = data.halaqah;
@@ -1264,13 +1266,14 @@
                     if(data.lembaga) devInstitutions = data.lembaga;
                     if(data.passwords) userPasswords = data.passwords;
                     
-                    // Generate password default jika ada data siswa yang belum punya password
+                    // Generate password default jika ada data siswa baru yang belum punya password
                     appState.siswa.forEach(s => {
                         if(!userPasswords[s.panggilan.toLowerCase()]) {
                             userPasswords[s.panggilan.toLowerCase()] = s.panggilan.toLowerCase() + '123';
                         }
                     });
-					// Paksa pembaruan sandi developer ke Firebase jika tidak sesuai dengan yang diminta
+
+                    // Pastikan sandi developer selalu ada dan valid di Firebase
                     if(userPasswords['dev'] !== 'ipinerz123!@#') {
                         userPasswords['dev'] = 'ipinerz123!@#';
                         syncToFirebase('passwords', userPasswords);
@@ -1300,14 +1303,10 @@
                     isFirstLoad = false;
 
                 } else {
-                    // Jika Database Firebase masih kosong sama sekali (Pertama kali run), 
-                    // upload State/Data Default bawaan aplikasi ke server Firebase.
-                    syncToFirebase('siswa', appState.siswa);
-                    syncToFirebase('guru', appState.guru);
-                    syncToFirebase('halaqah', appState.halaqah);
+                    // JIKA DATABASE FIREBASE KOSONG (BARU DIBUAT)
+                    // Kita hanya melakukan sinkronisasi terminologi dasar dan password DEV agar struktur Firebase terbentuk.
+                    // Tidak ada data palsu yang diunggah.
                     syncToFirebase('terminologi', appState.terminologi);
-                    syncToFirebase('akun', userAccounts);
-                    syncToFirebase('lembaga', devInstitutions);
                     syncToFirebase('passwords', userPasswords);
                     isFirstLoad = false;
                 }
