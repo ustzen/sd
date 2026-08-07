@@ -462,7 +462,10 @@
                             <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
                             <input type="text" placeholder="Cari Nama Guru..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/50">
                         </div>
-                        <button onclick="uiFormGuru(-1)" class="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 w-full md:w-auto shadow-sm"><i class="fa-solid fa-user-plus mr-2"></i>Tambah <span class="lbl-guru capitalize-text">Guru</span></button>
+                        <div class="flex gap-2 w-full md:w-auto">
+                            <button onclick="uiImportGuru()" class="px-3 py-2 bg-green-600 border border-green-700 text-white rounded-lg text-sm font-medium hover:bg-green-700 flex-1 md:flex-none shadow-sm"><i class="fa-solid fa-file-import mr-2"></i>Import Data</button>
+                            <button onclick="uiFormGuru(-1)" class="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 flex-1 md:flex-none shadow-sm"><i class="fa-solid fa-user-plus mr-2"></i>Tambah <span class="lbl-guru capitalize-text">Guru</span></button>
+                        </div>
                     </div>
                     <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden overflow-x-auto">
                         <table class="w-full text-left border-collapse min-w-[700px] shadow-sm rounded-lg overflow-hidden">
@@ -1721,19 +1724,30 @@
                 tbGuru.innerHTML = appState.guru.map((g, index) => {
                     const isGanjil = index % 2 === 0;
                     const bgRow = isGanjil ? 'bg-white' : 'bg-slate-50/50';
-                    const targetPass = userPasswords[g.nama.toLowerCase().replace(/\s/g, '')] || '123456';
+                    const safeUsername = g.usernameLogin || g.nama.toLowerCase().replace(/\s/g, '');
+                    const targetPass = userPasswords[safeUsername] || '123456';
+                    
+                    // Merakit nama lengkap beserta gelar (jika ada)
+                    const titleDepan = g.gelarDepan ? `${g.gelarDepan} ` : '';
+                    const titleBelakang = g.gelarBelakang ? `, ${g.gelarBelakang}` : '';
+                    const fullNama = `${titleDepan}${formatNamaGuru(g.nama, g.jk)}${titleBelakang}`;
+                    const idLabel = g.tipeId ? `${g.tipeId}: ${g.nip}` : `NIP: ${g.nip}`;
+
                     return `
                     <tr class="${bgRow} hover:bg-brand-50 transition-colors border-b border-brand-100/50">
                         <td class="p-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md">${g.nama.substring(0,2).toUpperCase()}</div>
-                                <div><p class="font-bold text-slate-800 text-base">${formatNamaGuru(g.nama, g.jk)}</p><p class="text-xs text-brand-600 font-medium">NIP: ${g.nip}</p></div>
+                                <div>
+                                    <p class="font-bold text-slate-800 text-base">${fullNama}</p>
+                                    <p class="text-xs text-brand-600 font-medium">${idLabel}</p>
+                                </div>
                             </div>
                         </td>
                         <td class="p-4"><span class="px-3 py-1 bg-white text-indigo-700 rounded-lg text-xs font-bold border border-indigo-200 shadow-sm">${appState.terminologi.halaqah} ${g.halaqah}</span></td>
                         <td class="p-4"><span class="font-medium text-slate-700"><i class="fa-solid fa-phone text-slate-400 text-xs mr-1"></i> ${g.kontak}</span></td>
                         <td class="p-4 text-right whitespace-nowrap">
-                            <button onclick="uiUbahSandiManual('${g.nama.toLowerCase().replace(/\s/g, '')}')" class="px-2 py-1.5 bg-slate-100 border border-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200 mr-2" title="Pass: ${targetPass}">Reset Sandi</button>
+                            <button onclick="uiUbahSandiManual('${safeUsername}')" class="px-2 py-1.5 bg-slate-100 border border-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200 mr-2" title="Pass: ${targetPass}">Reset Sandi</button>
                             <button onclick="uiFormGuru(${index})" class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full font-bold hover:bg-blue-200 hover:scale-110 transition shadow-sm mr-1" title="Edit"><i class="fa-solid fa-pen text-sm"></i></button>
                             <button onclick="askDeleteGuru(${index})" class="w-8 h-8 bg-red-100 text-red-600 rounded-full font-bold hover:bg-red-200 hover:scale-110 transition shadow-sm" title="Hapus"><i class="fa-solid fa-trash text-sm"></i></button>
                         </td>
@@ -2453,7 +2467,76 @@
         }
 
         // --- FUNGSI CRUD ADMIN ---
-        function uiFormGuru(index = -1) {
+		function uiFormGuru(index = -1) {
+            const isEdit = index >= 0;
+            const data = isEdit ? appState.guru[index] : { 
+                tipeId: 'NIP', nip: '', nama: '', panggilan: '', gelarDepan: '', gelarBelakang: '', jk: 'L', halaqah: '', kontak: '', usernameLogin: '' 
+            };
+            const title = isEdit ? `Edit Data ${appState.terminologi.guru}` : `Tambah ${appState.terminologi.guru} Baru`;
+
+            let halaqahOptions = appState.halaqah.map(h => `<option value="${h.id}" ${data.halaqah === h.id ? 'selected' : ''}>${h.id} -${h.nama}</option>`).join('');
+
+            // Cari sandi jika mode edit
+            const currentPass = isEdit ? (userPasswords[data.usernameLogin] || '123456') : '';
+
+            const body = `
+                <form id="form-guru" onsubmit="simpanGuru(event, ${index})" class="space-y-4">
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="col-span-1"><label class="text-xs font-bold text-slate-500 mb-1 block">Tanda Pengenal</label>
+                            <select id="guru-tipe-id" class="w-full border border-slate-200 p-2.5 rounded-lg bg-slate-50 text-sm outline-none">
+                                ${['NIP', 'NBM', 'NUPTK', 'NRG', 'NIY', 'NIGY', 'NIGK', 'PegID', 'NPK', 'NIK'].map(t => `<option value="${t}" ${data.tipeId === t ? 'selected' : ''}>${t}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="col-span-2"><label class="text-xs font-bold text-slate-500 mb-1 block">Nomor Identitas</label>
+                            <input type="text" id="guru-nip" value="${data.nip}" required class="w-full border border-slate-200 p-2.5 rounded-lg bg-slate-50 text-sm outline-none focus:ring-2 focus:ring-brand-500/50">
+                        </div>
+                    </div>
+                    
+                    <div><label class="text-xs font-bold text-slate-500 mb-1 block">Nama Lengkap</label>
+                    <input type="text" id="guru-nama" value="${data.nama}" required class="w-full border border-slate-200 p-2.5 rounded-lg bg-slate-50 text-sm outline-none focus:ring-2 focus:ring-brand-500/50"></div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="text-xs font-bold text-slate-500 mb-1 block">Nama Panggilan</label>
+                        <input type="text" id="guru-panggilan" value="${data.panggilan}" class="w-full border border-slate-200 p-2.5 rounded-lg bg-slate-50 text-sm outline-none focus:ring-2 focus:ring-brand-500/50"></div>
+                        <div><label class="text-xs font-bold text-slate-500 mb-1 block">Jenis Kelamin</label>
+                        <select id="guru-jk" class="w-full border border-slate-200 p-2.5 rounded-lg bg-slate-50 text-sm outline-none">
+                            <option value="L" ${data.jk === 'L' ? 'selected' : ''}>Laki-laki</option>
+                            <option value="P" ${data.jk === 'P' ? 'selected' : ''}>Perempuan</option>
+                        </select></div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="text-xs font-bold text-slate-500 mb-1 block">Gelar Depan (Opsional)</label>
+                        <input type="text" id="guru-gelar-depan" value="${data.gelarDepan}" placeholder="Cth: Drs." class="w-full border border-slate-200 p-2.5 rounded-lg bg-slate-50 text-sm outline-none focus:ring-2 focus:ring-brand-500/50"></div>
+                        <div><label class="text-xs font-bold text-slate-500 mb-1 block">Gelar Belakang (Opsional)</label>
+                        <input type="text" id="guru-gelar-belakang" value="${data.gelarBelakang}" placeholder="Cth: S.Pd., M.A." class="w-full border border-slate-200 p-2.5 rounded-lg bg-slate-50 text-sm outline-none focus:ring-2 focus:ring-brand-500/50"></div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="text-xs font-bold text-slate-500 mb-1 block">Pilih Halaqah</label>
+                        <select id="guru-halaqah" class="w-full border border-slate-200 p-2.5 rounded-lg bg-slate-50 text-sm outline-none">
+                            <option value="">-- Tidak Ada --</option>
+                            ${halaqahOptions}
+                        </select></div>
+                        <div><label class="text-xs font-bold text-slate-500 mb-1 block">Kontak / WhatsApp</label>
+                        <input type="text" id="guru-kontak" value="${data.kontak}" required class="w-full border border-slate-200 p-2.5 rounded-lg bg-slate-50 text-sm outline-none focus:ring-2 focus:ring-brand-500/50"></div>
+                    </div>
+
+                    <div class="p-3 bg-brand-50 border border-brand-100 rounded-lg mt-2">
+                        <p class="text-xs font-bold text-brand-800 mb-2 border-b border-brand-200 pb-1">Kredensial Login</p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="text-xs font-bold text-slate-500 mb-1 block">Username</label>
+                            <input type="text" id="guru-username" value="${data.usernameLogin}" required class="w-full border border-slate-200 p-2 rounded-lg bg-white text-sm outline-none focus:ring-2 focus:ring-brand-500/50"></div>
+                            <div><label class="text-xs font-bold text-slate-500 mb-1 block">Kata Sandi</label>
+                            <input type="text" id="guru-password" value="${currentPass}" ${isEdit ? '' : 'required'} placeholder="${isEdit ? 'Isi untuk ubah sandi' : 'Minimal 6 karakter'}" class="w-full border border-slate-200 p-2 rounded-lg bg-white text-sm outline-none focus:ring-2 focus:ring-brand-500/50"></div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="hidden" id="btn-submit-guru"></button>
+                </form>
+            `;
+            openModalDynamic(title, body, "Simpan Data", () => document.getElementById('btn-submit-guru').click());
+        }
             const isEdit = index >= 0;
             const data = isEdit ? appState.guru[index] : { nip: '', nama: '', jk: 'L', halaqah: '', kontak: '' };
             const title = isEdit ? `Edit Data Guru` : `Tambah Guru Baru`;
@@ -2488,20 +2571,53 @@
 
         function simpanGuru(e, index) {
             e.preventDefault();
+            const tipeId = document.getElementById('guru-tipe-id').value;
             const nip = document.getElementById('guru-nip').value;
             const nama = document.getElementById('guru-nama').value;
+            const panggilan = document.getElementById('guru-panggilan').value;
+            const gelarDepan = document.getElementById('guru-gelar-depan').value;
+            const gelarBelakang = document.getElementById('guru-gelar-belakang').value;
             const jk = document.getElementById('guru-jk').value;
             const halaqah = document.getElementById('guru-halaqah').value;
             const kontak = document.getElementById('guru-kontak').value;
+            const usernameLogin = document.getElementById('guru-username').value.toLowerCase().replace(/\s/g, '');
+            const passInput = document.getElementById('guru-password').value;
 
-            const newData = { nip, nama, jk, halaqah, kontak };
-            if(index >= 0) appState.guru[index] = newData;
-            else {
+            // Validasi Konflik Username Baru
+            if (index < 0 || (index >= 0 && appState.guru[index].usernameLogin !== usernameLogin)) {
+                if (userPasswords[usernameLogin]) {
+                    showToast("Gagal: Username Login tersebut sudah digunakan!", false);
+                    return;
+                }
+            }
+
+            const newData = { tipeId, nip, nama, panggilan, gelarDepan, gelarBelakang, jk, halaqah, kontak, usernameLogin };
+            
+            if(index >= 0) {
+                const oldUsername = appState.guru[index].usernameLogin;
+                appState.guru[index] = newData;
+
+                // Update kredensial login jika username berubah
+                if (oldUsername !== usernameLogin) {
+                    const tempPass = userPasswords[oldUsername];
+                    delete userPasswords[oldUsername];
+                    userPasswords[usernameLogin] = passInput || tempPass;
+
+                    const accMatch = userAccounts.find(a => a.username === oldUsername);
+                    if(accMatch) {
+                        accMatch.username = usernameLogin;
+                        accMatch.namaGuru = nama;
+                        if(passInput) accMatch.password = passInput;
+                    }
+                } else if (passInput) {
+                    userPasswords[usernameLogin] = passInput;
+                    const accMatch = userAccounts.find(a => a.username === usernameLogin);
+                    if(accMatch) accMatch.password = passInput;
+                }
+            } else {
                 appState.guru.push(newData);
-                const rawUser = nama.toLowerCase().replace(/\s/g, '');
-                userPasswords[rawUser] = '123456';
+                userPasswords[usernameLogin] = passInput || '123456';
 
-                // Assign to logged in admin's institution
                 let myInstId = 'T-001';
                 let myInstName = 'Ponpes Al-Fatih';
                 const activeAcc = userAccounts.find(a => a.username === loggedInUser);
@@ -2510,8 +2626,8 @@
                     myInstName = activeAcc.lembagaNama;
                 }
                 userAccounts.push({
-                    username: rawUser,
-                    password: '123456',
+                    username: usernameLogin,
+                    password: passInput || '123456',
                     role: 'guru',
                     lembagaId: myInstId,
                     lembagaNama: myInstName,
@@ -2542,6 +2658,32 @@
                 closeModalDynamic();
                 showToast('Data berhasil dihapus!', true);
                 renderAdminData();
+            });
+        }
+		
+		function uiImportGuru() {
+            const termGuru = appState.terminologi.guru;
+            const body = `
+                <div class="space-y-4">
+                    <div class="bg-brand-50 p-4 rounded-lg border border-brand-100">
+                        <p class="text-sm text-brand-800 font-bold mb-2"><i class="fa-solid fa-circle-info mr-1"></i> Format Penulisan Excel</p>
+                        <p class="text-xs text-brand-700 leading-relaxed mb-2">
+                            Pastikan baris pertama (header) pada file Anda persis memuat 10 kolom berurutan ini: <br>
+                        </p>
+                        <div class="bg-white border border-brand-200 p-2 rounded text-[10px] font-mono text-slate-600 overflow-x-auto whitespace-nowrap">
+                            [A] Jenis ID (NIP/NBM/dll) | [B] Nomor ID | [C] Nama Lengkap | [D] Panggilan | [E] Gelar Depan | [F] Gelar Belakang | [G] Kelamin (L/P) | [H] ID Halaqah | [I] WhatsApp | [J] Username | [K] Password
+                        </div>
+                    </div>
+                    <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:bg-slate-50 transition cursor-pointer" onclick="document.getElementById('file-import-guru').click()">
+                        <i class="fa-solid fa-file-excel text-5xl text-brand-500 mb-3"></i>
+                        <p class="text-sm font-bold text-slate-700">Klik atau seret file Excel ke sini</p>
+                        <p class="text-xs text-slate-500 mt-1">Maksimal ukuran file: 10MB</p>
+                        <input type="file" class="hidden" id="file-import-guru" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
+                    </div>
+                </div>`;
+            openModalDynamic(`Import Data ${termGuru}`, body, "Mulai Import", () => {
+                closeModalDynamic();
+                simulateProcess("Membaca data file Excel...", `Data ${termGuru} berhasil diimport ke sistem.`);
             });
         }
 
