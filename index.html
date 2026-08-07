@@ -1227,52 +1227,27 @@
                 });
         }
 
-        // STATE DATABASE AWAL SIMULASI
-        let devInstitutions = [
-            { id: 'T-001', nama: 'Ponpes Al-Fatih', paket: 'Premium', status: 'Aktif', masaAktif: '2026-12-20', jmlGuru: 32, jmlSiswa: 452 },
-            { id: 'T-002', nama: 'SDIT Bina Anak Sholeh', paket: 'Enterprise', status: 'Aktif', masaAktif: '2027-11-05', jmlGuru: 45, jmlSiswa: 450 },
-            { id: 'T-003', nama: 'TPQ Al-Hidayah', paket: 'Basic', status: 'Aktif', masaAktif: '2026-07-10', jmlGuru: 8, jmlSiswa: 85 }
-        ];
-
-        let userAccounts = [
-            { username: 'admin', password: '123456', role: 'admin', lembagaId: 'T-001', lembagaNama: 'Ponpes Al-Fatih', createdAt: '2025-01-10', namaAdmin: 'H. Usman' },
-            { username: 'guru', password: '123456', role: 'guru', lembagaId: 'T-001', lembagaNama: 'Ponpes Al-Fatih', createdAt: '2025-01-15', namaGuru: 'Ahmad' }
-        ];
-
+// STATE DATABASE AWAL (KOSONG - REAL DATA ONLY)
+        let devInstitutions = [];
+        let userAccounts = [];
         let nextLembagaId = 101;
 
         const appState = {
             terminologi: {
                 kepsek: 'Kepala Sekolah',
-                guru: 'Ustadz/Ustadzah',
+                guru: 'Guru',
                 murid: 'Data Siswa',
                 halaqah: 'Halaqah'
             },
-            guru: [
-                { nip: '10982345', nama: 'Ahmad', jk: 'L', halaqah: '7A', kontak: '08123456789' },
-                { nip: '10982346', nama: 'Budi Santoso', jk: 'L', halaqah: '7B', kontak: '08198765432' },
-                { nip: '10982347', nama: 'Fatih', jk: 'L', halaqah: '8A', kontak: '08123451111' },
-                { nip: '10982348', nama: 'Aisyah', jk: 'P', halaqah: '8B', kontak: '08123452222' }
-            ],
-            siswa: [
-                // Menambahkan Array Hafalan default
-                { nis: '2026001', nisn: '0091234567', nama: 'Nisa Purnamasari', panggilan: 'nisa', jk: 'P', kelas: '7A', wali: 'Haryanto', kontak: '08123456789', capaian: 'Juz 30 Selesai', persen: 100, hafalan: ['An-Nas', 'Al-Falaq', 'Al-Ikhlas', 'Al-Lahab', 'An-Nasr', 'Al-Kafirun', 'Al-Kausar'] },
-                { nis: '2026002', nisn: '0091234568', nama: 'Budi Santoso', panggilan: 'budi', jk: 'L', kelas: '7A', wali: 'Santoso', kontak: '08198765432', capaian: 'Al-Mulk Lengkap', persen: 90, hafalan: ['An-Nas', 'Al-Falaq', 'Al-Ikhlas'] },
-                { nis: '2026003', nisn: '0091234569', nama: 'Fulan bin Fulan', panggilan: 'fulan', jk: 'L', kelas: '7B', wali: 'Fulan', kontak: '08123456780', capaian: 'An-Naba', persen: 20, hafalan: [] }
-            ],
-            halaqah: [
-                { id: '7A', nama: 'Halaqah Abu Bakar', guru: 'Ahmad', total: 2 },
-                { id: '7B', nama: 'Halaqah Umar', guru: 'Budi Santoso', total: 1 }
-            ]
+            guru: [],
+            siswa: [],
+            halaqah: []
         };
 		
-        // DATABASE UNTUK PASSWORD SAAT LOGIN (BERSIFAT DINAMIS)
+        // HANYA AKUN DEV YANG DISISAKAN AGAR ANDA TETAP BISA LOGIN SAAT DATABASE KOSONG
         let userPasswords = {
-            'dev': 'ipinerz123!@#',
-            'admin': '123456',
-            'guru': '123456'
+            'dev': 'ipinerz123!@#'
 		};
-
         let isFirstLoad = true;
 
         // FUNGSI INISIALISASI UNTUK MENGAMBIL DATA DARI FIREBASE SECARA REALTIME
